@@ -1,5 +1,5 @@
 import { supabase } from '../supabaseClient';
-import { Listing } from '../../types/listing';
+import { Listing, ListingFormData } from '../../types/listing';
 
 export const createListing = async (data: ListingFormData) => {
   try {
@@ -52,22 +52,31 @@ export async function getListingById(id: string) {
   }
 }
 
-export async function updateListing(id: string, data: Partial<Listing>) {
+export const updateListing = async (id: string, data: Partial<Listing>, userId?: string): Promise<Listing> => {
   try {
-    const { data: updatedListing, error } = await supabase
+    let query = supabase
       .from('listings')
       .update(data)
-      .eq('id', id)
-      .select()
-      .single();
+      .eq('id', id);
 
-    if (error) throw error;
+    // If userId is provided, add it to the query conditions
+    if (userId) {
+      query = query.eq('user_id', userId);
+    }
+
+    const { data: updatedListing, error } = await query.select().single();
+
+    if (error) {
+      console.error('Error updating listing:', error);
+      throw error;
+    }
+
     return updatedListing;
   } catch (err) {
     console.error("Error updating listing:", err);
     throw err;
   }
-}
+};
 
 export async function deleteListing(id: string) {
   try {
@@ -82,3 +91,18 @@ export async function deleteListing(id: string) {
     throw err;
   }
 }
+
+export const getListing = async (id: string): Promise<Listing | null> => {
+  const { data, error } = await supabase
+    .from('listings')
+    .select('*')
+    .eq('id', id)
+    .single();
+
+  if (error) {
+    console.error('Error fetching listing:', error);
+    throw error;
+  }
+
+  return data;
+};

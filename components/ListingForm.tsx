@@ -34,12 +34,10 @@ type ListingFormData = z.infer<typeof listingSchema>;
 
 interface ListingFormProps {
   onSubmit: (data: CreateListingData) => Promise<void>;
-  onError: (error: Error) => void;
-  onSuccess: () => void;
+  isSubmitting: boolean;
 }
 
-export function ListingForm({ onSubmit, onError, onSuccess }: ListingFormProps) {
-  const [isSubmitting, setIsSubmitting] = useState(false);
+export function ListingForm({ onSubmit, isSubmitting }: ListingFormProps) {
   const { control, handleSubmit, formState: { errors } } = useForm<ListingFormData>({
     resolver: zodResolver(listingSchema),
     defaultValues: {
@@ -63,15 +61,7 @@ export function ListingForm({ onSubmit, onError, onSuccess }: ListingFormProps) 
   });
 
   const handleFormSubmit = async (data: CreateListingData) => {
-    setIsSubmitting(true);
-    try {
-      await onSubmit(data);
-      onSuccess();
-    } catch (error) {
-      onError(error as Error);
-    } finally {
-      setIsSubmitting(false);
-    }
+    await onSubmit(data);
   };
 
   return (
@@ -362,8 +352,8 @@ export function ListingForm({ onSubmit, onError, onSuccess }: ListingFormProps) 
         )}
       />
 
-      <Button type="submit" disabled={isSubmitting}>
-        {isSubmitting ? 'Submitting...' : 'Create Listing'}
+      <Button type="submit" disabled={isSubmitting} className="w-full">
+        {isSubmitting ? 'Creating...' : 'Create Listing'}
       </Button>
     </form>
   );

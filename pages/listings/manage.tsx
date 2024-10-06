@@ -12,6 +12,10 @@ const ManageListingsPage: NextPage = () => {
   if (isLoading) return <Layout><div>Loading...</div></Layout>;
   if (error) return <Layout><div>Error: {error.message}</div></Layout>;
 
+  const handleEdit = (listingId: string) => {
+    router.push(`/listings/edit/${listingId}`);
+  };
+
   return (
     <Layout>
       <div className="flex justify-between items-center mb-6">
@@ -30,7 +34,7 @@ const ManageListingsPage: NextPage = () => {
               <p className="text-gray-600">{listing.description.substring(0, 100)}...</p>
             </CardContent>
             <CardFooter className="flex justify-between">
-              <Button variant="outline" onClick={() => router.push(`/listings/edit/${listing.id}`)}>
+              <Button variant="outline" onClick={() => handleEdit(listing.id)}>
                 Edit
               </Button>
               <Button variant="destructive" onClick={() => handleDeleteListing(listing.id)}>

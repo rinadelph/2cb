@@ -289,8 +289,8 @@ function CheckoutForm() {
 
 **Tasks**:
 - Create a listing form (`components/ListingForm.tsx`).
-- Handle image and file uploads using Supabase Storage.
-- Support manual entry and consider MLS import functionality.
+-!!!! Handle image and file uploads using Supabase Storage.!!!!
+-!!!!! Support manual entry and consider MLS import functionality.!!!!
 
 **Relevant Files**:
 - `pages/listings/create.tsx`
