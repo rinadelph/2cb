@@ -1,0 +1,78 @@
+-- Enable the PostGIS extension
+CREATE EXTENSION IF NOT EXISTS postgis;
+
+-- Create the listings table in the public schema
+CREATE TABLE public.listings (
+  id UUID DEFAULT uuid_generate_v4() PRIMARY KEY,
+  user_id UUID REFERENCES auth.users(id) NOT NULL,
+  title VARCHAR(255) NOT NULL,
+  description TEXT,
+  property_type VARCHAR(50) NOT NULL,
+  price DECIMAL(12, 2) NOT NULL,
+  bedrooms INT,
+  bathrooms INT,
+  square_feet INT,
+  address VARCHAR(255) NOT NULL,
+  city VARCHAR(100) NOT NULL,
+  state VARCHAR(50) NOT NULL,
+  zip_code VARCHAR(20) NOT NULL,
+  latitude DECIMAL(10, 8),
+  longitude DECIMAL(11, 8),
+  location GEOGRAPHY(POINT, 4326),
+  status VARCHAR(20) DEFAULT 'active',
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+  updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+);
+
+-- Create an index on user_id for faster queries
+CREATE INDEX idx_listings_user_id ON public.listings(user_id);
+
+-- Create a GiST index for geospatial queries
+CREATE INDEX idx_listings_location ON public.listings USING GIST (location);
+
+-- Create a trigger to set the location field
+CREATE OR REPLACE FUNCTION public.set_listing_location()
+RETURNS TRIGGER AS $$
+BEGIN
+    NEW.location = ST_SetSRID(ST_MakePoint(NEW.longitude, NEW.latitude), 4326)::geography;
+    RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+CREATE TRIGGER set_listing_location_trigger
+BEFORE INSERT OR UPDATE OF latitude, longitude ON public.listings
+FOR EACH ROW EXECUTE FUNCTION public.set_listing_location();
+
+-- Enable Row Level Security
+ALTER TABLE public.listings ENABLE ROW LEVEL SECURITY;
+
+-- Create a policy to allow users to see all listings
+CREATE POLICY "Listings are viewable by everyone" ON public.listings
+  FOR SELECT USING (true);
+
+-- Create a policy to allow authenticated users to insert their own listings
+CREATE POLICY "Users can insert their own listings" ON public.listings
+  FOR INSERT WITH CHECK (auth.uid() = user_id);
+
+-- Create a policy to allow users to update their own listings
+CREATE POLICY "Users can update their own listings" ON public.listings
+  FOR UPDATE USING (auth.uid() = user_id);
+
+-- Create a policy to allow users to delete their own listings
+CREATE POLICY "Users can delete their own listings" ON public.listings
+  FOR DELETE USING (auth.uid() = user_id);
+
+-- Create a function to automatically update the updated_at timestamp
+CREATE OR REPLACE FUNCTION public.update_modified_column()
+RETURNS TRIGGER AS $$
+BEGIN
+    NEW.updated_at = now();
+    RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+-- Create a trigger to call the function before each update
+CREATE TRIGGER update_listings_modtime
+    BEFORE UPDATE ON public.listings
+    FOR EACH ROW
+    EXECUTE FUNCTION public.update_modified_column();
