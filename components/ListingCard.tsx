@@ -8,8 +8,8 @@ interface ListingCardProps {
 const ListingCard: React.FC<ListingCardProps> = ({ listing }) => {
   return (
     <div className="listing-card">
-      {listing.image && (
-        <img src={listing.image} alt={listing.title} className="listing-image" />
+      {listing.image_url && (
+        <img src={listing.image_url} alt={listing.title} className="listing-image" />
       )}
       <h2>{listing.title}</h2>
       <p>{listing.description}</p>

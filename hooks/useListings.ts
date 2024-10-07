@@ -27,14 +27,26 @@ export function useListings(id?: string) {
   const queryClient = useQueryClient();
   const { user } = useAuth();
 
-  const createListing = async (listingData: Omit<Listing, 'id' | 'user_id' | 'created_at'>): Promise<Listing> => {
-    console.log('Creating new listing');
+  const createListing = async (listingData: CreateListingData): Promise<Listing> => {
+    console.log('Creating new listing with data:', listingData);
     if (!user) throw new Error('You must be logged in to create a listing');
+    
+    // Remove null or undefined values from listingData
+    const cleanedData = Object.fromEntries(
+      Object.entries(listingData).filter(([, v]) => v != null && v !== undefined)
+    );
+
     const { data, error } = await supabase
       .from('listings')
-      .insert({ ...listingData, user_id: user.id })
-      .select();
-    if (error) throw new Error(`Failed to create listing: ${error.message}`);
+      .insert({ ...cleanedData, user_id: user.id })
+      .select()
+      .single();
+
+    if (error) {
+      console.error('Error creating listing:', error);
+      throw new Error(`Failed to create listing: ${error.message}`);
+    }
+    console.log('Listing created successfully:', data);
     return data;
   };
 
@@ -46,7 +58,10 @@ export function useListings(id?: string) {
       .select('user_id')
       .eq('id', id)
       .single();
-    if (fetchError) throw new Error(`Failed to fetch existing listing: ${fetchError.message}`);
+    if (fetchError) {
+      console.error('Error fetching existing listing:', fetchError);
+      throw new Error(`Failed to fetch existing listing: ${fetchError.message}`);
+    }
     if (existingListing && existingListing.user_id !== user.id) {
       throw new Error('You do not have permission to edit this listing');
     }
@@ -54,8 +69,12 @@ export function useListings(id?: string) {
       .from('listings')
       .update(listingData)
       .eq('id', id)
-      .select();
-    if (error) throw new Error(`Failed to update listing: ${error.message}`);
+      .select()
+      .single();
+    if (error) {
+      console.error('Error updating listing:', error);
+      throw new Error(`Failed to update listing: ${error.message}`);
+    }
     console.log('Listing updated successfully:', data);
     return data;
   };
