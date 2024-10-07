@@ -1,6 +1,7 @@
 import React from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/router';
+import { logInfo } from '../../lib/supabaseClient';
 
 interface SettingsLayoutProps {
   children: React.ReactNode;
@@ -9,7 +10,13 @@ interface SettingsLayoutProps {
 const SettingsLayout: React.FC<SettingsLayoutProps> = ({ children }) => {
   const router = useRouter();
 
-  const isActive = (path: string) => router.pathname === path;
+  const isActive = (path: string) => {
+    const active = router.pathname.startsWith(path);
+    logInfo(`Checking active path`, { path, active, currentPath: router.pathname });
+    return active;
+  };
+
+  logInfo('Rendering SettingsLayout', { path: router.pathname });
 
   return (
     <div className="flex">
