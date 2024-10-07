@@ -1,7 +1,7 @@
 import { useRouter } from 'next/router';
 import { useAuth } from '../hooks/useAuth';
-import { Layout } from '../components/Layout';
-import { Button } from '../components/ui/button';
+import { Layout } from '../components/Layout';  // Changed to named import
+import { Button } from '../components/ui/button';  // Keep lowercase 'b' if that's the correct filename
 
 export default function Home() {
   const router = useRouter();
@@ -21,15 +21,23 @@ export default function Home() {
             <Button onClick={() => router.push('/auth/login')} className="w-full sm:w-auto">
               Log In
             </Button>
-            <Button onClick={() => router.push('/auth/register')} variant="outline" className="w-full sm:w-auto">
+            <Button onClick={() => router.push('/auth/register')} className="w-full sm:w-auto">
               Register
             </Button>
           </div>
         )}
         {user && (
-          <Button onClick={() => router.push('/dashboard')} className="w-full sm:w-auto">
-            Go to Dashboard
-          </Button>
+          <div className="space-y-4">
+            <Button onClick={() => router.push('/dashboard')} className="w-full sm:w-auto">
+              Go to Dashboard
+            </Button>
+            <Button onClick={() => router.push('/listings')} className="w-full sm:w-auto">
+              Listings
+            </Button>
+            <Button onClick={() => router.push('/settings')} className="w-full sm:w-auto">
+              Settings
+            </Button>
+          </div>
         )}
       </div>
     </Layout>
