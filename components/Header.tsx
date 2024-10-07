@@ -2,33 +2,35 @@ import React from 'react';
 import Link from 'next/link';
 import { useAuth } from '../hooks/useAuth';
 
-export const Header: React.FC = () => {
+export default function Header() {
   const { user } = useAuth();
 
   return (
-    <header className="bg-white shadow">
-      <nav className="container mx-auto px-4 sm:px-6 lg:px-8 py-4">
-        <div className="flex justify-between items-center">
-          <Link href="/" className="text-2xl font-extrabold text-indigo-600">
-            2Click Broker
+    <header className="bg-blue-500 text-white p-4">
+      <nav className="container mx-auto flex justify-between items-center">
+        <Link href="/">
+          <a className="text-2xl font-bold">Home</a>
+        </Link>
+        <div className="space-x-4">
+          <Link href="/listings">
+            <a>Listings</a>
           </Link>
-          <ul className="flex space-x-4">
-            <li><Link href="/" className="text-gray-600 hover:text-indigo-600">Home</Link></li>
-            {user && (
-              <>
-                <li><Link href="/dashboard" className="text-gray-600 hover:text-indigo-600">Dashboard</Link></li>
-                <li><Link href="/listings" className="text-gray-600 hover:text-indigo-600">Listings</Link></li>
-              </>
-            )}
-            {!user && (
-              <>
-                <li><Link href="/auth/login" className="text-gray-600 hover:text-indigo-600">Login</Link></li>
-                <li><Link href="/auth/register" className="text-gray-600 hover:text-indigo-600">Register</Link></li>
-              </>
-            )}
-          </ul>
+          {user && (
+            <Link href="/listings/create">
+              <a>Create Listing</a>
+            </Link>
+          )}
+          {user ? (
+            <Link href="/profile">
+              <a>Profile</a>
+            </Link>
+          ) : (
+            <Link href="/login">
+              <a>Login</a>
+            </Link>
+          )}
         </div>
       </nav>
     </header>
   );
-};
+}
