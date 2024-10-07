@@ -1,38 +1,36 @@
 import { useEffect, useState } from 'react'
-import { useRouter } from 'next/router'
-import { getCurrentUser, isEmailVerified } from '../lib/auth'
+import { supabase } from '../lib/supabaseClient'
+import { User } from '@supabase/supabase-js'
 
-export function useAuth(requireVerification = true) {
-  const [user, setUser] = useState(null)
+export function useAuth() {
+  const [user, setUser] = useState<User | null>(null)
   const [loading, setLoading] = useState(true)
-  const router = useRouter()
 
   useEffect(() => {
-    async function checkAuth() {
-      try {
-        const currentUser = await getCurrentUser()
-        if (currentUser) {
-          if (requireVerification) {
-            const verified = await isEmailVerified()
-            if (!verified) {
-              router.push('/auth/verify-email')
-              return
-            }
-          }
-          setUser(currentUser)
-        } else {
-          router.push('/auth/login')
-        }
-      } catch (error) {
-        console.error('Auth check failed', error)
-        router.push('/auth/login')
-      } finally {
-        setLoading(false)
+    const fetchSession = async () => {
+      const { data: { session }, error } = await supabase.auth.getSession()
+      console.log('useAuth - Session:', session);
+      if (error) {
+        console.error('Error fetching session:', error);
       }
+      setUser(session?.user ?? null)
+      setLoading(false)
     }
 
-    checkAuth()
-  }, [requireVerification, router])
+    fetchSession()
+
+    const { data: authListener } = supabase.auth.onAuthStateChange(
+      async (event, session) => {
+        console.log('useAuth - Auth state changed:', event);
+        setUser(session?.user ?? null)
+        setLoading(false)
+      }
+    )
+
+    return () => {
+      authListener.subscription.unsubscribe()
+    }
+  }, [])
 
   return { user, loading }
 }

@@ -1,0 +1,3 @@
+Begin by enclosing all thoughts within <thinking> tags, exploring multiple angles and approaches.
+Break down the solution into clear steps within <step> tags. Start with a 20-step budget, requesting more for complex problems if needed.
+Use <count> tags after each step to show the remaining budget. Stop when reaching 0.
