@@ -27,13 +27,13 @@ export function useListings(id?: string) {
   const queryClient = useQueryClient();
   const { user } = useAuth();
 
-  const createListing = async (listingData: CreateListingData): Promise<Listing> => {
+  const createListing = async (listingData: Omit<Listing, 'id' | 'user_id' | 'created_at'>): Promise<Listing> => {
     console.log('Creating new listing');
     if (!user) throw new Error('You must be logged in to create a listing');
     const { data, error } = await supabase
       .from('listings')
       .insert({ ...listingData, user_id: user.id })
-      .single();
+      .select();
     if (error) throw new Error(`Failed to create listing: ${error.message}`);
     return data;
   };
@@ -54,7 +54,7 @@ export function useListings(id?: string) {
       .from('listings')
       .update(listingData)
       .eq('id', id)
-      .single();
+      .select();
     if (error) throw new Error(`Failed to update listing: ${error.message}`);
     console.log('Listing updated successfully:', data);
     return data;

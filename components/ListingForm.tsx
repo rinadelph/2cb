@@ -32,6 +32,7 @@ export default function ListingForm({ initialData, onCancel }: ListingFormProps)
   const { createListing, updateListing } = useListings();
   const { toast } = useToast();
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [image, setImage] = useState(initialData?.image || '');
 
   const { register, handleSubmit, formState: { errors } } = useForm<ListingFormData>({
     resolver: zodResolver(listingSchema),
@@ -134,6 +135,15 @@ export default function ListingForm({ initialData, onCancel }: ListingFormProps)
           type="file"
           accept="image/*"
           {...register('image')}
+        />
+      </div>
+      <div>
+        <label htmlFor="image">Image URL:</label>
+        <input
+          type="text"
+          id="image"
+          value={image}
+          onChange={(e) => setImage(e.target.value)}
         />
       </div>
       {initialData?.image_url && (
