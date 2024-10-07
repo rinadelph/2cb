@@ -1,31 +1,99 @@
-import { useState, useEffect } from 'react';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '../lib/supabaseClient';
-import { Listing } from '../types/listing';
+import { Listing, CreateListingData } from '../types/listing';
+import { useAuth } from './useAuth';
 
-export function useListings() {
-  const [listings, setListings] = useState<Listing[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState<Error | null>(null);
+const fetchAllListings = async (): Promise<Listing[]> => {
+  console.log('Fetching all listings');
+  const { data, error } = await supabase
+    .from('listings')
+    .select('*');
+  if (error) throw new Error(`Failed to fetch listings: ${error.message}`);
+  return data;
+};
 
-  useEffect(() => {
-    async function fetchListings() {
-      try {
-        const { data, error } = await supabase
-          .from('listings')
-          .select('*')
-          .order('created_at', { ascending: false });
+const fetchListing = async (id: string): Promise<Listing> => {
+  console.log(`Fetching listing with id: ${id}`);
+  const { data, error } = await supabase
+    .from('listings')
+    .select('*')
+    .eq('id', id)
+    .single();
+  if (error) throw new Error(`Failed to fetch listing: ${error.message}`);
+  return data;
+};
 
-        if (error) throw error;
-        setListings(data as Listing[]);
-      } catch (e) {
-        setError(e as Error);
-      } finally {
-        setIsLoading(false);
-      }
+export function useListings(id?: string) {
+  const queryClient = useQueryClient();
+  const { user } = useAuth();
+
+  const createListing = async (listingData: CreateListingData): Promise<Listing> => {
+    console.log('Creating new listing');
+    if (!user) throw new Error('You must be logged in to create a listing');
+    const { data, error } = await supabase
+      .from('listings')
+      .insert({ ...listingData, user_id: user.id })
+      .single();
+    if (error) throw new Error(`Failed to create listing: ${error.message}`);
+    return data;
+  };
+
+  const updateListing = async ({ id, ...listingData }: Partial<Listing> & { id: string }): Promise<Listing> => {
+    console.log(`Updating listing with id: ${id}`, listingData);
+    if (!user) throw new Error('You must be logged in to update a listing');
+    const { data: existingListing, error: fetchError } = await supabase
+      .from('listings')
+      .select('user_id')
+      .eq('id', id)
+      .single();
+    if (fetchError) throw new Error(`Failed to fetch existing listing: ${fetchError.message}`);
+    if (existingListing && existingListing.user_id !== user.id) {
+      throw new Error('You do not have permission to edit this listing');
     }
+    const { data, error } = await supabase
+      .from('listings')
+      .update(listingData)
+      .eq('id', id)
+      .single();
+    if (error) throw new Error(`Failed to update listing: ${error.message}`);
+    console.log('Listing updated successfully:', data);
+    return data;
+  };
 
-    fetchListings();
-  }, []);
+  const listingsQuery = useQuery({
+    queryKey: ['listings'],
+    queryFn: fetchAllListings,
+    staleTime: 60000, // 1 minute
+  });
 
-  return { listings, isLoading, error };
+  const listingQuery = useQuery({
+    queryKey: ['listing', id],
+    queryFn: () => fetchListing(id!),
+    enabled: !!id,
+    staleTime: 60000, // 1 minute
+  });
+
+  const createMutation = useMutation({
+    mutationFn: createListing,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['listings'] });
+    },
+  });
+
+  const updateMutation = useMutation({
+    mutationFn: updateListing,
+    onSuccess: (data) => {
+      queryClient.invalidateQueries({ queryKey: ['listing', data.id] });
+      queryClient.invalidateQueries({ queryKey: ['listings'] });
+    },
+  });
+
+  return {
+    listing: listingQuery.data,
+    listings: listingsQuery.data,
+    isLoading: listingQuery.isLoading || listingsQuery.isLoading,
+    error: listingQuery.error || listingsQuery.error,
+    createListing: createMutation.mutateAsync,
+    updateListing: updateMutation.mutateAsync,
+  };
 }
