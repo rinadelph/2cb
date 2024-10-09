@@ -1,34 +1,108 @@
-import React from 'react';
+import React, { useState } from 'react';
+import { supabase } from '../../../lib/supabaseClient';
+import { logInfo, logError } from '../../../lib/supabaseClient';
 
-const ProfilePicture: React.FC = () => {
-  const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+interface ProfilePictureProps {
+  profilePictureUrl: string | null;
+  userId: string;
+  onUpdate: (url: string | null) => void;
+}
+
+const ProfilePicture: React.FC<ProfilePictureProps> = ({ profilePictureUrl, userId, onUpdate }) => {
+  const [isUploading, setIsUploading] = useState(false);
+
+  const handleFileChange = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
-    if (file) {
-      // TODO: Implement file upload logic
-      console.log('File selected:', file.name);
+    if (!file) return;
+
+    setIsUploading(true);
+    try {
+      const fileExt = file.name.split('.').pop();
+      const fileName = `${userId}-${Math.random()}.${fileExt}`;
+      const filePath = `profile-pictures/${fileName}`;
+
+      const { error: uploadError } = await supabase.storage
+        .from('avatars')
+        .upload(filePath, file);
+
+      if (uploadError) {
+        throw uploadError;
+      }
+
+      const { data: urlData } = supabase.storage
+        .from('avatars')
+        .getPublicUrl(filePath);
+
+      const newProfilePictureUrl = urlData.publicUrl;
+
+      const { error: updateError } = await supabase
+        .from('profiles')
+        .update({ profile_picture_url: newProfilePictureUrl })
+        .eq('id', userId);
+
+      if (updateError) {
+        throw updateError;
+      }
+
+      onUpdate(newProfilePictureUrl);
+      logInfo('Profile picture updated successfully', { userId, newProfilePictureUrl });
+    } catch (error) {
+      logError('Error updating profile picture:', error);
+      console.error('Error updating profile picture:', error);
+    } finally {
+      setIsUploading(false);
+    }
+  };
+
+  const handleDelete = async () => {
+    try {
+      const { error: updateError } = await supabase
+        .from('profiles')
+        .update({ profile_picture_url: null })
+        .eq('id', userId);
+
+      if (updateError) {
+        throw updateError;
+      }
+
+      onUpdate(null);
+      logInfo('Profile picture deleted successfully', { userId });
+    } catch (error) {
+      logError('Error deleting profile picture:', error);
+      console.error('Error deleting profile picture:', error);
     }
   };
 
   return (
-    <div className="flex items-center space-x-4">
-      <div className="w-24 h-24 bg-gray-300 rounded-full overflow-hidden">
-        {/* TODO: Display current profile picture */}
-      </div>
-      <div>
-        <input
-          type="file"
-          accept="image/*"
-          onChange={handleFileChange}
-          className="hidden"
-          id="profile-picture-input"
-        />
-        <label
-          htmlFor="profile-picture-input"
-          className="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600 cursor-pointer"
-        >
-          Update Picture
-        </label>
-      </div>
+    <div className="flex flex-col items-center">
+      {profilePictureUrl ? (
+        <div className="relative">
+          <img 
+            src={profilePictureUrl} 
+            alt="Profile Picture"
+            style={{ width: '100%', height: 'auto', maxWidth: '300px' }} // Adjust maxWidth as needed
+          />
+          <button
+            onClick={handleDelete}
+            className="absolute top-0 right-0 bg-red-500 text-white rounded-full p-2"
+            aria-label="Delete profile picture"
+          >
+            X
+          </button>
+        </div>
+      ) : (
+        <div className="w-48 h-48 bg-gray-200 rounded-full flex items-center justify-center">
+          <span className="text-gray-500">No Image</span>
+        </div>
+      )}
+      <input
+        type="file"
+        accept="image/*"
+        onChange={handleFileChange}
+        className="mt-4"
+        disabled={isUploading}
+      />
+      {isUploading && <p>Uploading...</p>}
     </div>
   );
 };

@@ -1,22 +1,22 @@
-2cb\pages\index.tsx
+pages\index.tsx
 Edit home page to add a link to the settings page
 
-2cb\pages\settings\index.tsx
+pages\settings\index.tsx
 Create a settings page with a sidebar and a tab navigation system
 
-2cb\components\Settings\SettingsLayout.tsx
+components\Settings\SettingsLayout.tsx
 Create a SettingsLayout component with a sidebar and a tab navigation system
 
-2cb\pages\settings\profile\index.tsx
+pages\settings\profile\index.tsx
 Create a profile settings page with a form to update the user's profile information, profile picture and profile tabs
 
-2cb\components\Settings\Profile\ProfileForm.tsx
+components\Settings\Profile\ProfileForm.tsx
 Create a ProfileForm component with a form to update the user's profile information
 
-2cb\components\Settings\Profile\ProfilePicture.tsx
+components\Settings\Profile\ProfilePicture.tsx
 Create a ProfilePicture component with a button to update the user's profile picture
 
-2cb\components\Settings\Profile\ProfileTabs.tsx
+components\Settings\Profile\ProfileTabs.tsx
 Create a ProfileTabs component with a tab navigation system
 
 

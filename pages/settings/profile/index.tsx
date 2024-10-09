@@ -3,18 +3,18 @@ import { Layout } from '../../../components/Layout';
 import SettingsLayout from '../../../components/Settings/SettingsLayout';
 import ProfileForm from '../../../components/Settings/Profile/ProfileForm';
 import ProfilePicture from '../../../components/Settings/Profile/ProfilePicture';
-import ProfileTabs from '../../../components/Settings/Profile/ProfileTabs';
 import { useAuth } from '../../../hooks/useAuth';
 import { logInfo, logError } from '../../../lib/supabaseClient';
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { supabase } from '../../../lib/supabaseClient';
 
-// Update the ProfileData type to include email and bio
+// Update the ProfileData type to include email, bio, and profile_picture_url
 type ProfileData = {
   id: string;
   name: string;
   email: string;
   bio: string;
+  profile_picture_url: string | null; // Added profile_picture_url
 };
 
 const ProfileSettingsPage: NextPage = () => {
@@ -24,40 +24,47 @@ const ProfileSettingsPage: NextPage = () => {
   const [error, setError] = useState<string | null>(null);
   const [showDebug, setShowDebug] = useState(false);
 
-  useEffect(() => {
-    const fetchProfileData = async () => {
-      logInfo('Fetching profile data', { user: user?.id });
-      if (user) {
-        try {
-          const { data, error } = await supabase
-            .from('profiles')
-            .select('id, name, email, bio') // Add email and bio here
-            .eq('id', user.id)
-            .single();
+  const fetchProfileData = useCallback(async () => {
+    logInfo('Fetching profile data', { user: user?.id });
+    if (user) {
+      try {
+        setIsLoading(true);
+        const { data, error } = await supabase
+          .from('profiles')
+          .select('id, name, email, bio, profile_picture_url')
+          .eq('id', user.id)
+          .single();
 
-          if (error) {
-            logError('Error fetching profile data:', error);
-            setError('Failed to fetch profile data. Please try again.');
-            throw error;
-          }
-          logInfo('Profile data fetched successfully', { data });
-          setProfileData(data);
-        } catch (error) {
-          logError('Error in fetchProfileData:', error);
-          setError('An unexpected error occurred. Please try again.');
-        } finally {
-          setIsLoading(false);
+        if (error) {
+          logError('Error fetching profile data:', error);
+          setError('Failed to fetch profile data. Please try again.');
+          throw error;
         }
-      } else {
-        logInfo('No user found, skipping profile fetch');
+        logInfo('Profile data fetched successfully', { data });
+        setProfileData(data);
+      } catch (error) {
+        logError('Error in fetchProfileData:', error);
+        setError('An unexpected error occurred. Please try again.');
+      } finally {
         setIsLoading(false);
       }
-    };
+    } else {
+      logInfo('No user found, skipping profile fetch');
+      setIsLoading(false);
+    }
+  }, [user]);
 
+  useEffect(() => {
     if (!authLoading) {
       fetchProfileData();
     }
-  }, [user, authLoading]);
+  }, [authLoading, fetchProfileData]);
+
+  const handleProfilePictureUpdate = (url: string | null) => {
+    logInfo('Profile picture updated', { url });
+    setProfileData(prevData => prevData ? { ...prevData, profile_picture_url: url } : null);
+    fetchProfileData(); // Fetch the latest data after update
+  };
 
   logInfo('Rendering ProfileSettingsPage', { authLoading, userId: user?.id, profileData, isLoading, error });
 
@@ -86,9 +93,14 @@ const ProfileSettingsPage: NextPage = () => {
     <Layout>
       <SettingsLayout>
         <h1 className="text-2xl font-bold mb-4">Profile Settings</h1>
-        <ProfileTabs />
         <div className="mt-6">
-          <ProfilePicture />
+          {profileData && (
+            <ProfilePicture
+              profilePictureUrl={profileData.profile_picture_url}
+              userId={user.id}
+              onUpdate={handleProfilePictureUpdate}
+            />
+          )}
         </div>
         <div className="mt-6">
           {error && <div className="text-red-500 mb-4">{error}</div>}
