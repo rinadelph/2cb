@@ -1,97 +1,97 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { supabase } from '../lib/supabaseClient';
+import { supabase } from '@/lib/supabase';  // Change from '../lib/supabaseClient'
 import { Listing, CreateListingData } from '../types/listing';
 import { useAuth } from './useAuth';
-
-const fetchAllListings = async (): Promise<Listing[]> => {
-  console.log('Fetching all listings');
-  const { data, error } = await supabase
-    .from('listings')
-    .select('*');
-  if (error) throw new Error(`Failed to fetch listings: ${error.message}`);
-  return data;
-};
-
-const fetchListing = async (id: string): Promise<Listing> => {
-  console.log(`Fetching listing with id: ${id}`);
-  const { data, error } = await supabase
-    .from('listings')
-    .select('*')
-    .eq('id', id)
-    .single();
-  if (error) throw new Error(`Failed to fetch listing: ${error.message}`);
-  return data;
-};
 
 export function useListings(id?: string) {
   const queryClient = useQueryClient();
   const { user } = useAuth();
 
+  const fetchListing = async (id: string): Promise<Listing> => {
+    const { data, error } = await supabase
+      .from('listings')
+      .select('*')
+      .eq('id', id)
+      .single();
+
+    if (error) throw error;
+    return data;
+  };
+
+  const fetchListings = async (): Promise<Listing[]> => {
+    try {
+      const { data, error } = await supabase
+        .from('listings')
+        .select('*')
+        .order('created_at', { ascending: false });
+
+      if (error) {
+        console.error('Error fetching listings:', error);
+        throw new Error(error.message);
+      }
+
+      return data || [];
+    } catch (error) {
+      console.error('Error in fetchListings:', error);
+      throw error;
+    }
+  };
+
   const createListing = async (listingData: CreateListingData): Promise<Listing> => {
-    console.log('Creating new listing with data:', listingData);
-    if (!user) throw new Error('You must be logged in to create a listing');
-    
-    // Remove null or undefined values from listingData
-    const cleanedData = Object.fromEntries(
-      Object.entries(listingData).filter(([, v]) => v != null && v !== undefined)
-    );
+    if (!user) throw new Error('User must be logged in to create a listing');
 
     const { data, error } = await supabase
       .from('listings')
-      .insert({ ...cleanedData, user_id: user.id })
+      .insert([{ ...listingData, user_id: user.id }])
       .select()
       .single();
 
-    if (error) {
-      console.error('Error creating listing:', error);
-      throw new Error(`Failed to create listing: ${error.message}`);
-    }
-    console.log('Listing created successfully:', data);
+    if (error) throw error;
     return data;
   };
 
-  const updateListing = async ({ id, ...listingData }: Partial<Listing> & { id: string }): Promise<Listing> => {
-    console.log(`Updating listing with id: ${id}`, listingData);
-    if (!user) throw new Error('You must be logged in to update a listing');
-    const { data: existingListing, error: fetchError } = await supabase
-      .from('listings')
-      .select('user_id')
-      .eq('id', id)
-      .single();
-    if (fetchError) {
-      console.error('Error fetching existing listing:', fetchError);
-      throw new Error(`Failed to fetch existing listing: ${fetchError.message}`);
-    }
-    if (existingListing && existingListing.user_id !== user.id) {
-      throw new Error('You do not have permission to edit this listing');
-    }
+  const updateListing = async ({ id, ...updateData }: Partial<Listing> & { id: string }): Promise<Listing> => {
+    if (!user) throw new Error('User must be logged in to update a listing');
+
     const { data, error } = await supabase
       .from('listings')
-      .update(listingData)
+      .update(updateData)
       .eq('id', id)
+      .eq('user_id', user.id) // Ensure user owns the listing
       .select()
       .single();
-    if (error) {
-      console.error('Error updating listing:', error);
-      throw new Error(`Failed to update listing: ${error.message}`);
-    }
-    console.log('Listing updated successfully:', data);
+
+    if (error) throw error;
     return data;
   };
 
-  const listingsQuery = useQuery({
-    queryKey: ['listings'],
-    queryFn: fetchAllListings,
-    staleTime: 60000, // 1 minute
-  });
+  const deleteListing = async (id: string): Promise<void> => {
+    if (!user) throw new Error('User must be logged in to delete a listing');
 
-  const listingQuery = useQuery({
+    const { error } = await supabase
+      .from('listings')
+      .delete()
+      .eq('id', id)
+      .eq('user_id', user.id) // Ensure user owns the listing;
+
+    if (error) throw error;
+  };
+
+  // Query for a single listing
+  const { data: listing, isLoading: singleLoading, error: singleError } = useQuery({
     queryKey: ['listing', id],
     queryFn: () => fetchListing(id!),
     enabled: !!id,
-    staleTime: 60000, // 1 minute
   });
 
+  // Query for all listings
+  const { data: listings, isLoading: listingsLoading, error: listingsError } = useQuery({
+    queryKey: ['listings'],
+    queryFn: fetchListings,
+    enabled: !id,
+  });
+
+  // Mutations
   const createMutation = useMutation({
     mutationFn: createListing,
     onSuccess: () => {
@@ -102,17 +102,25 @@ export function useListings(id?: string) {
   const updateMutation = useMutation({
     mutationFn: updateListing,
     onSuccess: (data) => {
+      queryClient.invalidateQueries({ queryKey: ['listings'] });
       queryClient.invalidateQueries({ queryKey: ['listing', data.id] });
+    },
+  });
+
+  const deleteMutation = useMutation({
+    mutationFn: deleteListing,
+    onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['listings'] });
     },
   });
 
   return {
-    listing: listingQuery.data,
-    listings: listingsQuery.data,
-    isLoading: listingQuery.isLoading || listingsQuery.isLoading,
-    error: listingQuery.error || listingsQuery.error,
-    createListing: createMutation.mutateAsync,
-    updateListing: updateMutation.mutateAsync,
+    listing,
+    listings: listings || [], // Provide default empty array
+    isLoading: id ? singleLoading : listingsLoading,
+    error: id ? singleError : listingsError,
+    createListing: createMutation.mutate,
+    updateListing: updateMutation.mutate,
+    deleteListing: deleteMutation.mutate,
   };
 }

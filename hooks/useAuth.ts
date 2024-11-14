@@ -1,36 +1,63 @@
-import { useEffect, useState } from 'react'
-import { supabase } from '../lib/supabaseClient'
-import { User } from '@supabase/supabase-js'
+import { useState, useEffect } from 'react'
+import { supabase } from '@/lib/supabase'
+import { useRouter } from 'next/router'
+import { logger } from '@/lib/debug'
+import type { User } from '@supabase/supabase-js'
 
-export function useAuth() {
+export const useAuth = () => {
+  const router = useRouter()
   const [user, setUser] = useState<User | null>(null)
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
-    const fetchSession = async () => {
-      const { data: { session }, error } = await supabase.auth.getSession()
-      console.log('useAuth - Session:', session);
-      if (error) {
-        console.error('Error fetching session:', error);
-      }
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
       setUser(session?.user ?? null)
       setLoading(false)
-    }
+    })
 
-    fetchSession()
-
-    const { data: authListener } = supabase.auth.onAuthStateChange(
-      async (event, session) => {
-        console.log('useAuth - Auth state changed:', event);
-        setUser(session?.user ?? null)
-        setLoading(false)
-      }
-    )
-
-    return () => {
-      authListener.subscription.unsubscribe()
-    }
+    return () => subscription.unsubscribe()
   }, [])
 
-  return { user, loading }
+  const signInWithEmail = async (email: string, password: string) => {
+    try {
+      const { error: signInError } = await supabase.auth.signInWithPassword({
+        email,
+        password,
+      })
+
+      if (signInError) throw signInError
+      router.push('/dashboard')
+    } catch (err) {
+      logger.error('Login error:', err)
+      throw err
+    }
+  }
+
+  const signUp = async (email: string, password: string) => {
+    try {
+      const { error } = await supabase.auth.signUp({
+        email,
+        password,
+      })
+      
+      if (error) throw error
+    } catch (err) {
+      logger.error('Registration error:', err)
+      throw err
+    }
+  }
+
+  const signOut = async () => {
+    await supabase.auth.signOut()
+    router.push('/')
+  }
+
+  return {
+    user,
+    loading,
+    signInWithEmail,
+    signUp,
+    signOut,
+    isAuthenticated: !!user,
+  }
 }

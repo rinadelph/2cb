@@ -1,0 +1,138 @@
+graph TD
+    %% Pages/Routes
+    Home["Home Page"]
+    Login["Login Page"]
+    Register["Register Page"]
+    Dashboard["Dashboard"]
+    Profile["Profile Page"]
+    Listings["Listings Page"]
+    ListingDetails["Listing Details Page"]
+    CreateListing["Create Listing Page"]
+    EditListing["Edit Listing Page"]
+    Messages["Messages Page"]
+    Conversation["Conversation Page"]
+    Search["Search Page"]
+    Admin["Admin Panel"]
+    ForgotPassword["Forgot Password Page"]
+    ResetPassword["Reset Password Page"]
+
+    %% Components
+    Header["Header Component"]
+    Footer["Footer Component"]
+    AuthForm["Auth Form Component"]
+    ListingCard["Listing Card Component"]
+    ListingDetailsComp["Listing Details Component"]
+    ListingForm["Listing Form Component"]
+    MessageList["Message List Component"]
+    MessageForm["Message Form Component"]
+    SearchBar["Search Bar Component"]
+    FilterOptions["Filter Options Component"]
+    Pagination["Pagination Component"]
+    Modal["Modal Component"]
+    Dropdown["Dropdown Component"]
+    ImageUploader["Image Uploader Component"]
+    Map["Map Component"]
+    Notification["Notification Component"]
+    LoadingSpinner["Loading Spinner Component"]
+    ErrorBoundary["Error Boundary Component"]
+
+    %% Redux Store
+    ReduxStore["Redux Store"]
+    AuthSlice["Auth Slice"]
+    ListingsSlice["Listings Slice"]
+    MessagesSlice["Messages Slice"]
+    NotificationsSlice["Notifications Slice"]
+    SearchSlice["Search Slice"]
+
+    %% API Endpoints
+    AuthAPI["Auth API"]
+    UsersAPI["Users API"]
+    ListingsAPI["Listings API"]
+    MessagesAPI["Messages API"]
+    SearchAPI["Search API"]
+
+    %% Database Models
+    UserModel[("User Model")]
+    ListingModel[("Listing Model")]
+    MessageModel[("Message Model")]
+    NotificationModel[("Notification Model")]
+
+    %% Middleware
+    AuthMiddleware["Auth Middleware"]
+    ErrorMiddleware["Error Middleware"]
+    ValidationMiddleware["Validation Middleware"]
+
+    %% Utils
+    ApiClient["API Client"]
+    Validation["Validation Util"]
+    Formatters["Formatters Util"]
+    ImageProcessing["Image Processing Util"]
+
+    %% External Services
+    Stripe["Stripe Payment"]
+    Cloudinary["Cloudinary Image Hosting"]
+    Mapbox["Mapbox Integration"]
+    SendGrid["SendGrid Email Service"]
+
+    %% 2-Click System
+    QuickOffer["Quick Offer Feature"]
+    InstantBooking["Instant Booking Feature"]
+
+    %% Interactions
+    Home --> Header & Footer & ListingCard & SearchBar
+    Login & Register & ForgotPassword & ResetPassword --> AuthForm
+    Dashboard --> ListingCard & Notification
+    Profile --> UserModel & ImageUploader
+    Listings --> ListingCard & FilterOptions & Pagination & SearchBar
+    ListingDetails --> ListingDetailsComp & Map & MessageForm & QuickOffer & InstantBooking
+    CreateListing & EditListing --> ListingForm & ImageUploader & Map
+    Messages --> MessageList
+    Conversation --> MessageForm
+    Search --> SearchBar & ListingCard & FilterOptions & Pagination
+    Admin --> Dropdown & Modal
+
+    %% Redux Interactions
+    ReduxStore --> AuthSlice & ListingsSlice & MessagesSlice & NotificationsSlice & SearchSlice
+    AuthSlice <--> AuthAPI
+    ListingsSlice <--> ListingsAPI
+    MessagesSlice <--> MessagesAPI
+    NotificationsSlice <--> NotificationModel
+    SearchSlice <--> SearchAPI
+
+    %% API Interactions
+    AuthAPI & UsersAPI <--> UserModel
+    ListingsAPI <--> ListingModel
+    MessagesAPI <--> MessageModel
+    SearchAPI --> ListingModel
+
+    %% Middleware Applications
+    AuthMiddleware --> AuthAPI & UsersAPI & ListingsAPI & MessagesAPI
+    ErrorMiddleware --> Modal
+    ValidationMiddleware --> AuthForm & ListingForm & MessageForm
+
+    %% Util Usage
+    ApiClient --> AuthAPI & UsersAPI & ListingsAPI & MessagesAPI & SearchAPI
+    Validation --> AuthForm & ListingForm & MessageForm
+    Formatters --> ListingCard & ListingDetailsComp
+    ImageProcessing --> ImageUploader
+
+    %% External Service Interactions
+    Stripe --> CreateListing & QuickOffer & InstantBooking
+    Cloudinary --> ImageUploader
+    Mapbox --> Map
+    SendGrid --> AuthAPI & NotificationsSlice
+
+    %% 2-Click System Interactions
+    QuickOffer & InstantBooking --> ListingsAPI & Stripe
+
+    %% Color coding
+    classDef done fill:#22c55e,stroke:#000,stroke-width:2px;
+    classDef inProgress fill:#eab308,stroke:#000,stroke-width:2px;
+    classDef notWorking fill:#ef4444,stroke:#000,stroke-width:2px;
+    classDef notBuilt fill:#6b7280,stroke:#000,stroke-width:2px;
+
+    %% Color assignments (adjust based on actual status)
+    class Home,Login,Register,AuthForm,Header,Footer done;
+    class Dashboard,Listings,ListingDetails,ListingCard,FilterOptions,SearchBar inProgress;
+    class CreateListing,EditListing,Messages,Conversation,Search,QuickOffer,InstantBooking notWorking;
+    class Admin,ForgotPassword,ResetPassword notBuilt;

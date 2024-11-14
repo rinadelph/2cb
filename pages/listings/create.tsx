@@ -1,30 +1,55 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { useRouter } from 'next/router';
 import ListingForm from '../../components/ListingForm';
 import { useAuth } from '../../hooks/useAuth';
 import { Layout } from '../../components/Layout';
+import { logger } from '@/lib/debug';
 
 const CreateListingPage: React.FC = () => {
   const router = useRouter();
-  const { user } = useAuth();
+  const { user, loading, isAuthenticated } = useAuth();
 
-  if (!user) {
+  useEffect(() => {
+    logger.info('Create Listing Page - Mount', {
+      isLoading: loading,
+      isAuthenticated,
+      userId: user?.id,
+      timestamp: new Date().toISOString(),
+    });
+
+    // Debug auth state changes
+    return () => {
+      logger.info('Create Listing Page - Unmount', {
+        isAuthenticated,
+        userId: user?.id,
+      });
+    };
+  }, [user, loading, isAuthenticated]);
+
+  if (loading) {
+    logger.info('Create Listing Page - Loading');
     return (
       <Layout>
-        <div className="flex items-center justify-center h-screen">
-          <div className="text-center">
-            <h1 className="text-2xl font-bold mb-4">Please log in to create a listing</h1>
-            <button
-              onClick={() => router.push('/login')}
-              className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded"
-            >
-              Go to Login
-            </button>
-          </div>
+        <div className="flex justify-center items-center min-h-[60vh]">
+          <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-primary"></div>
         </div>
       </Layout>
     );
   }
+
+  if (!isAuthenticated) {
+    logger.error('Create Listing Page - Access Denied', {
+      reason: 'Not authenticated',
+      redirecting: true,
+    });
+    router.push('/auth/login');
+    return null;
+  }
+
+  logger.success('Create Listing Page - Access Granted', {
+    userId: user?.id,
+    email: user?.email,
+  });
 
   const handleCancel = () => {
     router.push('/listings');
@@ -33,7 +58,7 @@ const CreateListingPage: React.FC = () => {
   return (
     <Layout>
       <div className="container mx-auto px-4 py-8">
-        <h1 className="text-3xl font-bold mb-8 text-center">Create New Listing</h1>
+        <h1 className="text-3xl font-bold mb-8">Create New Listing</h1>
         <ListingForm onCancel={handleCancel} />
       </div>
     </Layout>

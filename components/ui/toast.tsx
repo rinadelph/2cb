@@ -29,7 +29,7 @@ const toastVariants = cva(
   {
     variants: {
       variant: {
-        default: "border bg-background text-foreground",
+        default: "border bg-background",
         destructive:
           "destructive group border-destructive bg-destructive text-destructive-foreground",
       },
@@ -126,19 +126,4 @@ export {
   ToastDescription,
   ToastClose,
   ToastAction,
-}
-
-// Add this function to create and manage toasts
-export function useToast() {
-  const [toasts, setToasts] = React.useState<ToastProps[]>([])
-
-  const toast = React.useCallback(({ ...props }: ToastProps) => {
-    setToasts((prevToasts) => [...prevToasts, props])
-  }, [])
-
-  const dismissToast = React.useCallback((id: string) => {
-    setToasts((prevToasts) => prevToasts.filter((toast) => toast.id !== id))
-  }, [])
-
-  return { toast, dismissToast, toasts }
 }
