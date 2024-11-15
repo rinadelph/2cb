@@ -1,127 +1,165 @@
 "use client"
 
 import { useState } from 'react'
-import { useRouter } from 'next/router'
+import { useAuth } from '@/hooks/useAuth'
+import { useToast } from '@/components/ui/use-toast'
+import { logger } from '@/lib/debug'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
-import { Icons } from '@/components/icons'
-import { useAuth } from '@/hooks/useAuth'
+import { Checkbox } from '@/components/ui/checkbox'
+import Link from 'next/link'
+import { Card, CardContent, CardFooter, CardHeader } from '@/components/ui/card'
 import { Loader2 } from 'lucide-react'
-import { cn } from '@/lib/utils'
-import { logger } from '@/lib/debug'
-import { useToast } from '@/components/ui/use-toast'
 
 export function LoginForm() {
-  const router = useRouter()
-  const { signIn, signInWithEmail } = useAuth()
+  const { signInWithEmail } = useAuth()
   const { toast } = useToast()
   const [isLoading, setIsLoading] = useState<boolean>(false)
-  const [email, setEmail] = useState('')
-  const [password, setPassword] = useState('')
+  const [formError, setFormError] = useState<string | null>(null)
+  const [rememberMe, setRememberMe] = useState<boolean>(() => {
+    // Check if there was a previous remember me preference
+    try {
+      return localStorage.getItem('rememberMe') === 'true'
+    } catch {
+      return false
+    }
+  })
 
-  async function onSubmit(e: React.FormEvent) {
-    e.preventDefault()
+  const onSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
+    event.preventDefault()
+    if (isLoading) return
+
     setIsLoading(true)
+    setFormError(null)
 
     try {
-      await signInWithEmail(email, password)
-      logger.success('Email login successful')
-      router.push('/dashboard')
-    } catch (error) {
-      logger.error('Login error:', error)
-      toast({
-        variant: "destructive",
-        title: "Login Failed",
-        description: "Invalid email or password. Please try again.",
+      const formData = new FormData(event.currentTarget)
+      const email = formData.get('email') as string
+      const password = formData.get('password') as string
+
+      logger.info('Login attempt initiated', { 
+        email,
+        rememberMe 
       })
+
+      const { error } = await signInWithEmail(email, password, { rememberMe })
+
+      if (error) {
+        logger.error('Login failed', { 
+          error: error.message
+        })
+        setFormError(error.message)
+        toast({
+          variant: "destructive",
+          title: "Login failed",
+          description: error.message || "Invalid login credentials",
+        })
+      }
+    } catch (err) {
+      logger.error('Unexpected error in login form:', err)
+      setFormError('An unexpected error occurred')
     } finally {
       setIsLoading(false)
     }
   }
 
-  async function handleGoogleLogin() {
-    try {
-      setIsLoading(true);
-      logger.info('Starting Google login');
-      await signIn('google');
-    } catch (error: any) {
-      logger.error('Google login failed', error);
-      toast({
-        variant: "destructive",
-        title: "Login Failed",
-        description: error.message === "Unsupported provider" 
-          ? "Google login is not configured. Please try email login or contact support."
-          : "Failed to login with Google. Please try again.",
-      });
-    } finally {
-      setIsLoading(false);
-    }
-  }
-
   return (
-    <div className="grid gap-6">
+    <Card className="border-none shadow-lg bg-background">
+      <CardHeader className="space-y-1">
+        <h1 className="text-3xl font-bold text-center text-foreground">
+          Log in to your account
+        </h1>
+        <p className="text-center text-foreground/60">
+          Enter your credentials to access your account
+        </p>
+      </CardHeader>
       <form onSubmit={onSubmit}>
-        <div className="grid gap-4">
-          <div className="grid gap-2">
-            <Label htmlFor="email">Email</Label>
+        <CardContent className="space-y-4 pt-4">
+          {formError && (
+            <div className="p-3 text-sm text-destructive bg-destructive/10 rounded-md">
+              {formError}
+            </div>
+          )}
+          <div className="space-y-2">
+            <Label htmlFor="email" className="text-foreground">
+              Email
+            </Label>
             <Input
               id="email"
+              name="email"
               placeholder="name@example.com"
               type="email"
               autoCapitalize="none"
               autoComplete="email"
               autoCorrect="off"
               disabled={isLoading}
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
+              required
+              className="bg-background border-input"
             />
           </div>
-          <div className="grid gap-2">
-            <Label htmlFor="password">Password</Label>
+          <div className="space-y-2">
+            <div className="flex items-center justify-between">
+              <Label htmlFor="password" className="text-foreground">
+                Password
+              </Label>
+              <Link 
+                href="/reset-password"
+                className="text-sm text-primary hover:text-primary/80 transition-colors"
+              >
+                Forgot password?
+              </Link>
+            </div>
             <Input
               id="password"
+              name="password"
               type="password"
               autoCapitalize="none"
               autoComplete="current-password"
+              autoCorrect="off"
               disabled={isLoading}
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
+              required
+              className="bg-background border-input"
             />
           </div>
-          <Button disabled={isLoading}>
-            {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-            Sign In
+          <div className="flex items-center space-x-2">
+            <Checkbox
+              id="remember"
+              checked={rememberMe}
+              onCheckedChange={(checked) => setRememberMe(checked as boolean)}
+            />
+            <Label 
+              htmlFor="remember" 
+              className="text-sm text-muted-foreground cursor-pointer"
+            >
+              Remember me for 30 days
+            </Label>
+          </div>
+        </CardContent>
+        <CardFooter className="flex flex-col space-y-4">
+          <Button 
+            type="submit" 
+            className="w-full" 
+            size="lg"
+            disabled={isLoading}
+          >
+            {isLoading ? (
+              <>
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                Signing in...
+              </>
+            ) : (
+              'Sign In'
+            )}
           </Button>
-        </div>
+          <p className="text-center text-sm text-foreground/60">
+            Don&apos;t have an account?{' '}
+            <Link href="/auth/register" className="text-primary hover:text-primary/80 transition-colors font-medium">
+              Sign up
+            </Link>
+          </p>
+        </CardFooter>
       </form>
-      <div className="relative">
-        <div className="absolute inset-0 flex items-center">
-          <span className="w-full border-t" />
-        </div>
-        <div className="relative flex justify-center text-xs uppercase">
-          <span className="bg-background px-2 text-muted-foreground">
-            Or continue with
-          </span>
-        </div>
-      </div>
-      <Button
-        variant="outline"
-        type="button"
-        disabled={isLoading}
-        onClick={handleGoogleLogin}
-        className={cn(
-          "w-full",
-          isLoading && "opacity-50 cursor-not-allowed"
-        )}
-      >
-        {isLoading ? (
-          <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-        ) : (
-          <Icons.google className="mr-2 h-4 w-4" />
-        )}{" "}
-        Google
-      </Button>
-    </div>
+    </Card>
   )
 }

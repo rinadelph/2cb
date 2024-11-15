@@ -1,39 +1,123 @@
-const DEBUG_STYLES = {
-  auth: 'background: #4f46e5; color: white; padding: 2px 4px; border-radius: 2px;',
-  error: 'background: #ef4444; color: white; padding: 2px 4px; border-radius: 2px;',
-  success: 'background: #22c55e; color: white; padding: 2px 4px; border-radius: 2px;',
-  info: 'background: #3b82f6; color: white; padding: 2px 4px; border-radius: 2px;',
-  warning: 'background: #f59e0b; color: white; padding: 2px 4px; border-radius: 2px;',
-};
+type LogLevel = 'info' | 'warn' | 'error' | 'debug';
 
-export const logger = {
-  auth: (message: string, data?: any) => {
-    console.group(`%c Auth `, DEBUG_STYLES.auth, message);
-    if (data) console.log('Data:', data);
-    console.groupEnd();
-  },
-  error: (message: string, error?: any) => {
-    console.group(`%c Error `, DEBUG_STYLES.error, message);
-    if (error) {
-      console.error('Details:', error);
-      if (error.message) console.error('Message:', error.message);
-      if (error.status) console.error('Status:', error.status);
+interface LogMessage {
+  timestamp: string;
+  level: LogLevel;
+  message: string;
+  data?: any;
+  error?: Error;
+}
+
+class Logger {
+  private isDevelopment = process.env.NODE_ENV === 'development';
+
+  private formatMessage(level: LogLevel, message: string, data?: any): LogMessage {
+    return {
+      timestamp: new Date().toISOString(),
+      level,
+      message,
+      data: this.sanitizeData(data),
+    };
+  }
+
+  private sanitizeData(data: any) {
+    if (!data) return undefined;
+
+    // Deep clone the data to avoid modifying the original
+    const sanitized = JSON.parse(JSON.stringify(data));
+
+    // Remove sensitive fields
+    const sensitiveFields = ['password', 'token', 'accessToken', 'refreshToken'];
+    const sanitizeObject = (obj: any) => {
+      if (typeof obj !== 'object' || obj === null) return;
+
+      Object.keys(obj).forEach(key => {
+        if (sensitiveFields.includes(key.toLowerCase())) {
+          obj[key] = '[REDACTED]';
+        } else if (typeof obj[key] === 'object') {
+          sanitizeObject(obj[key]);
+        }
+      });
+    };
+
+    sanitizeObject(sanitized);
+    return sanitized;
+  }
+
+  private log(level: LogLevel, message: string, data?: any) {
+    const logMessage = this.formatMessage(level, message, data);
+
+    if (this.isDevelopment) {
+      const consoleMethod = level === 'error' ? 'error' : 
+                          level === 'warn' ? 'warn' : 
+                          level === 'debug' ? 'debug' : 'log';
+
+      console[consoleMethod](
+        `[${logMessage.timestamp}] [${level.toUpperCase()}] ${message}`,
+        data ? logMessage.data : ''
+      );
     }
-    console.groupEnd();
-  },
-  success: (message: string, data?: any) => {
-    console.group(`%c Success `, DEBUG_STYLES.success, message);
-    if (data) console.log('Data:', data);
-    console.groupEnd();
-  },
-  info: (message: string, data?: any) => {
-    console.group(`%c Info `, DEBUG_STYLES.info, message);
-    if (data) console.log('Data:', data);
-    console.groupEnd();
-  },
-  warning: (message: string, data?: any) => {
-    console.group(`%c Warning `, DEBUG_STYLES.warning, message);
-    if (data) console.log('Data:', data);
-    console.groupEnd();
-  },
-};
+
+    // In production, you might want to send logs to a service
+    if (!this.isDevelopment) {
+      // TODO: Implement production logging service
+      // e.g., send to Sentry, LogRocket, etc.
+    }
+  }
+
+  info(message: string, data?: any) {
+    this.log('info', message, data);
+  }
+
+  warn(message: string, data?: any) {
+    this.log('warn', message, data);
+  }
+
+  error(message: string, error?: Error | unknown, data?: any) {
+    const errorData = error instanceof Error ? {
+      name: error.name,
+      message: error.message,
+      stack: error.stack,
+      ...data
+    } : data;
+
+    this.log('error', message, errorData);
+  }
+
+  debug(message: string, data?: any) {
+    if (this.isDevelopment) {
+      this.log('debug', message, data);
+    }
+  }
+
+  // Auth specific logging methods
+  authAttempt(email: string) {
+    this.info('Authentication attempt', { email, timestamp: new Date().toISOString() });
+  }
+
+  authSuccess(userId: string, email: string) {
+    this.info('Authentication successful', {
+      userId,
+      email,
+      timestamp: new Date().toISOString()
+    });
+  }
+
+  authFailure(email: string, reason: string) {
+    this.warn('Authentication failed', {
+      email,
+      reason,
+      timestamp: new Date().toISOString()
+    });
+  }
+
+  sessionActivity(userId: string, action: string) {
+    this.info('Session activity', {
+      userId,
+      action,
+      timestamp: new Date().toISOString()
+    });
+  }
+}
+
+export const logger = new Logger();

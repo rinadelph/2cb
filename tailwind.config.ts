@@ -18,6 +18,15 @@ const config: Config = {
       },
     },
     extend: {
+      backgroundColor: {
+        background: "hsl(var(--background))",
+      },
+      textColor: {
+        foreground: "hsl(var(--foreground))",
+      },
+      borderColor: {
+        DEFAULT: "hsl(var(--border))",
+      },
       colors: {
         border: "hsl(var(--border))",
         input: "hsl(var(--input))",
