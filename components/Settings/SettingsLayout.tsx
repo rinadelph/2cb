@@ -1,48 +1,75 @@
-import React from 'react';
-import Link from 'next/link';
-import { useRouter } from 'next/router';
-import { logInfo } from '../../lib/supabaseClient';
+import { cn } from "@/lib/utils";
+import Link from "next/link";
+import { useRouter } from "next/router";
+import { 
+  User, Bell, Shield, CreditCard, Building2, 
+  Settings as SettingsIcon 
+} from "lucide-react";
+
+const settingsNavItems = [
+  {
+    title: "Profile",
+    href: "/settings/profile",
+    icon: User,
+  },
+  {
+    title: "Notifications",
+    href: "/settings/notifications",
+    icon: Bell,
+  },
+  {
+    title: "Security",
+    href: "/settings/security",
+    icon: Shield,
+  },
+  {
+    title: "Billing",
+    href: "/settings/billing",
+    icon: CreditCard,
+  },
+  {
+    title: "Broker Info",
+    href: "/settings/broker",
+    icon: Building2,
+  },
+  {
+    title: "Advanced",
+    href: "/settings/advanced",
+    icon: SettingsIcon,
+  },
+];
 
 interface SettingsLayoutProps {
   children: React.ReactNode;
 }
 
-const SettingsLayout: React.FC<SettingsLayoutProps> = ({ children }) => {
+export function SettingsLayout({ children }: SettingsLayoutProps) {
   const router = useRouter();
 
-  const isActive = (path: string) => {
-    const active = router.pathname.startsWith(path);
-    logInfo(`Checking active path`, { path, active, currentPath: router.pathname });
-    return active;
-  };
-
-  logInfo('Rendering SettingsLayout', { path: router.pathname });
-
   return (
-    <div className="flex">
-      <nav className="w-64 min-h-screen bg-gray-100 p-4">
-        <h2 className="text-xl font-semibold mb-4">Settings</h2>
-        <ul>
-          <li className="mb-2">
-            <Link href="/settings/profile" className={`block p-2 rounded ${isActive('/settings/profile') ? 'bg-blue-500 text-white' : 'hover:bg-gray-200'}`}>
-              Profile
-            </Link>
-          </li>
-          <li className="mb-2">
-            <Link href="/settings/account" className={`block p-2 rounded ${isActive('/settings/account') ? 'bg-blue-500 text-white' : 'hover:bg-gray-200'}`}>
-              Account
-            </Link>
-          </li>
-          <li className="mb-2">
-            <Link href="/settings/notifications" className={`block p-2 rounded ${isActive('/settings/notifications') ? 'bg-blue-500 text-white' : 'hover:bg-gray-200'}`}>
-              Notifications
-            </Link>
-          </li>
-        </ul>
-      </nav>
-      <main className="flex-1 p-8">{children}</main>
+    <div className="container mx-auto px-4 py-8">
+      <div className="flex flex-col space-y-8 lg:flex-row lg:space-x-12 lg:space-y-0">
+        <aside className="lg:w-1/5">
+          <nav className="flex space-x-2 lg:flex-col lg:space-x-0 lg:space-y-1">
+            {settingsNavItems.map((item) => (
+              <Link
+                key={item.href}
+                href={item.href}
+                className={cn(
+                  "flex items-center justify-start rounded-lg px-3 py-2 text-sm font-medium hover:bg-accent hover:text-accent-foreground",
+                  router.pathname === item.href
+                    ? "bg-accent text-accent-foreground"
+                    : "transparent"
+                )}
+              >
+                <item.icon className="mr-2 h-4 w-4" />
+                {item.title}
+              </Link>
+            ))}
+          </nav>
+        </aside>
+        <div className="flex-1 lg:max-w-4xl">{children}</div>
+      </div>
     </div>
   );
-};
-
-export default SettingsLayout;
+}

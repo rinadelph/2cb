@@ -1,152 +1,135 @@
-import { NextPage } from 'next';
-import { useRouter } from 'next/router';
-import { Layout } from '@/components/Layout';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { motion } from 'framer-motion';
+import { Layout } from "@/components/Layout";
+import { useRouter } from "next/router";
+import { motion } from "framer-motion";
+import { StatCard } from "@/components/dashboard/stat-card";
+import { ActionCard } from "@/components/dashboard/action-card";
 import {
   Building2,
+  Activity,
+  Users,
+  DollarSign,
   ListPlus,
   Settings,
-  Users,
-  Activity,
-  DollarSign,
-  ArrowUpRight
-} from 'lucide-react';
+} from "lucide-react";
+import { useAuth } from "@/lib/auth/auth-context";
+import { authLogger } from "@/lib/auth/auth-logger";
 
-const DashboardPage: NextPage = () => {
+export default function DashboardPage() {
   const router = useRouter();
+  const { user } = useAuth();
+
+  authLogger.debug('Dashboard rendering:', {
+    user: user?.email
+  });
 
   const stats = [
     {
       title: "Total Listings",
       value: "0",
-      description: "Active listings this month",
+      description: "Add your first property listing to get started",
       icon: Building2,
-      action: () => router.push('/listings'),
+      action: () => router.push('/listings/create'),
+      emptyState: {
+        message: "Create your first property listing",
+        cta: "Add Listing"
+      }
     },
     {
       title: "Total Views",
       value: "0",
-      description: "Listing views this month",
+      description: "Your listings haven't received any views yet",
       icon: Activity,
-      action: () => router.push('/analytics'),
+      emptyState: {
+        message: "Share your listings to get views",
+        cta: "View Analytics"
+      }
     },
     {
       title: "Total Leads",
       value: "0",
-      description: "New leads this month",
+      description: "No leads generated yet",
       icon: Users,
-      action: () => router.push('/leads'),
+      emptyState: {
+        message: "Start collecting leads",
+        cta: "View Leads"
+      }
     },
     {
       title: "Commission",
       value: "$0",
-      description: "Earned this month",
+      description: "Track your earnings",
       icon: DollarSign,
-      action: () => router.push('/earnings'),
-    },
+      emptyState: {
+        message: "Start tracking your commissions",
+        cta: "View Earnings"
+      }
+    }
   ];
 
-  const quickActions = [
+  const actions = [
     {
       title: "Create Listing",
-      description: "Add a new property listing",
+      description: "Add a new property listing to your portfolio",
       icon: ListPlus,
-      action: () => router.push('/listings/create'),
+      onClick: () => router.push('/listings/create')
     },
     {
       title: "Settings",
-      description: "Manage your account settings",
+      description: "Configure your account and preferences",
       icon: Settings,
-      action: () => router.push('/settings'),
-    },
+      onClick: () => router.push('/settings')
+    }
   ];
 
   return (
     <Layout>
-      <div className="container max-w-7xl mx-auto p-6">
-        <div className="flex flex-col gap-8">
-          {/* Header */}
-          <div className="flex flex-col gap-2">
-            <h1 className="text-3xl font-bold tracking-tight text-foreground">
-              Dashboard
-            </h1>
-            <p className="text-muted-foreground">
-              Welcome back! Here&apos;s an overview of your activity.
-            </p>
-          </div>
+      <div className="container max-w-7xl mx-auto p-6 space-y-8">
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5 }}
+          className="space-y-2"
+        >
+          <h1 className="text-3xl font-bold tracking-tight">
+            Welcome back{user?.email ? `, ${user.email.split('@')[0]}!` : '!'}
+          </h1>
+          <p className="text-muted-foreground">
+            Here's an overview of your activity.
+          </p>
+        </motion.div>
 
-          {/* Stats Grid */}
-          <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
-            {stats.map((stat, index) => {
-              const Icon = stat.icon;
-              return (
-                <motion.div
-                  key={stat.title}
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: index * 0.1 }}
-                >
-                  <Card className="hover:shadow-lg transition-shadow">
-                    <CardHeader className="flex flex-row items-center justify-between pb-2">
-                      <CardTitle className="text-sm font-medium text-muted-foreground">
-                        {stat.title}
-                      </CardTitle>
-                      <Icon className="h-4 w-4 text-muted-foreground" />
-                    </CardHeader>
-                    <CardContent>
-                      <div className="text-2xl font-bold text-foreground">
-                        {stat.value}
-                      </div>
-                      <p className="text-xs text-muted-foreground pt-1">
-                        {stat.description}
-                      </p>
-                    </CardContent>
-                  </Card>
-                </motion.div>
-              );
-            })}
-          </div>
+        <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
+          {stats.map((stat, i) => (
+            <motion.div
+              key={stat.title}
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ 
+                duration: 0.5,
+                delay: i * 0.1 
+              }}
+            >
+              <StatCard {...stat} />
+            </motion.div>
+          ))}
+        </div>
 
-          {/* Quick Actions */}
-          <div className="grid gap-6 sm:grid-cols-2">
-            {quickActions.map((action, index) => {
-              const Icon = action.icon;
-              return (
-                <motion.div
-                  key={action.title}
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: 0.4 + index * 0.1 }}
-                >
-                  <Card 
-                    className="hover:shadow-lg transition-all cursor-pointer group"
-                    onClick={action.action}
-                  >
-                    <CardHeader>
-                      <div className="flex items-center justify-between">
-                        <div className="flex items-center space-x-4">
-                          <div className="p-2 bg-primary/10 rounded-lg">
-                            <Icon className="h-6 w-6 text-primary" />
-                          </div>
-                          <div>
-                            <CardTitle className="text-lg">{action.title}</CardTitle>
-                            <CardDescription>{action.description}</CardDescription>
-                          </div>
-                        </div>
-                        <ArrowUpRight className="h-5 w-5 text-muted-foreground group-hover:text-primary transition-colors" />
-                      </div>
-                    </CardHeader>
-                  </Card>
-                </motion.div>
-              );
-            })}
-          </div>
+        <div className="grid gap-6 md:grid-cols-2">
+          {actions.map((action, i) => (
+            <motion.div
+              key={action.title}
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ 
+                duration: 0.5,
+                delay: 0.4 + (i * 0.1)
+              }}
+            >
+              <ActionCard {...action} />
+            </motion.div>
+          ))}
         </div>
       </div>
     </Layout>
   );
-};
-
-export default DashboardPage;
+}

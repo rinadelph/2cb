@@ -2,17 +2,43 @@
 CREATE TABLE listings (
   id UUID DEFAULT uuid_generate_v4() PRIMARY KEY,
   title TEXT NOT NULL,
+  mls_number TEXT,
   description TEXT NOT NULL,
   price DECIMAL(10, 2) NOT NULL,
+  property_type TEXT NOT NULL,
+  status TEXT DEFAULT 'draft',
   bedrooms INTEGER NOT NULL,
   bathrooms DECIMAL(3, 1) NOT NULL,
   address TEXT NOT NULL,
   images TEXT[] DEFAULT '{}',
-  status TEXT DEFAULT 'active',
   created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
   updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
   user_id UUID REFERENCES auth.users(id)
 );
+
+-- Create enum for property types
+CREATE TYPE property_type AS ENUM (
+  'single_family_home',
+  'condo',
+  'townhouse',
+  'multi_family',
+  'land',
+  'commercial'
+);
+
+-- Create enum for listing status
+CREATE TYPE listing_status AS ENUM (
+  'draft',
+  'active',
+  'pending',
+  'sold',
+  'withdrawn'
+);
+
+-- Modify columns to use enums
+ALTER TABLE listings 
+  ALTER COLUMN property_type TYPE property_type USING property_type::property_type,
+  ALTER COLUMN status TYPE listing_status USING status::listing_status;
 
 -- Enable Row Level Security
 ALTER TABLE listings ENABLE ROW LEVEL SECURITY;

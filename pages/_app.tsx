@@ -3,6 +3,7 @@ import type { AppProps } from 'next/app';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { ThemeProvider } from 'next-themes';
 import { Toaster } from '@/components/ui/toaster';
+import { AuthProvider } from '@/lib/auth/auth-context';
 
 // Create a client
 const queryClient = new QueryClient({
@@ -16,16 +17,18 @@ const queryClient = new QueryClient({
 
 export default function App({ Component, pageProps }: AppProps) {
   return (
-    <QueryClientProvider client={queryClient}>
-      <ThemeProvider
-        attribute="class"
-        defaultTheme="system"
-        enableSystem
-        disableTransitionOnChange
-      >
-        <Component {...pageProps} />
-        <Toaster />
-      </ThemeProvider>
-    </QueryClientProvider>
+    <AuthProvider>
+      <QueryClientProvider client={queryClient}>
+        <ThemeProvider
+          attribute="class"
+          defaultTheme="system"
+          enableSystem
+          disableTransitionOnChange
+        >
+          <Component {...pageProps} />
+          <Toaster />
+        </ThemeProvider>
+      </QueryClientProvider>
+    </AuthProvider>
   );
 }

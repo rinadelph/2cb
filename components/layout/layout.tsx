@@ -1,4 +1,4 @@
-import { Header } from "./layout/header";
+import { Header } from "./header";
 
 export function Layout({ children }: { children: React.ReactNode }) {
   return (
@@ -7,4 +7,4 @@ export function Layout({ children }: { children: React.ReactNode }) {
       <main className="flex-1">{children}</main>
     </div>
   );
-}
+} 

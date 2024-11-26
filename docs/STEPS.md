@@ -1,7 +1,7 @@
 # 2Click Broker Development Steps
 
 ## 1. Authentication System [IN PROGRESS]
-### 1.1. Basic Auth [✓]
+### 1.1. Basic Auth ✓
 - [x] Login page
 - [x] Register page
 - [x] Password reset flow
@@ -12,7 +12,7 @@
 
 ### 1.2. Auth Enhancements [IN PROGRESS]
 
-#### 1.2.1. Remember Me Functionality [✓]
+#### 1.2.1. Remember Me Functionality ✓
 - [x] Add remember me checkbox to login form
 - [x] Implement persistent session storage
 - [x] Add session duration configuration
@@ -20,7 +20,7 @@
 - [x] Add session recovery mechanism
 - [x] Implement secure cookie handling
 
-#### 1.2.2. Session Management [✓]
+#### 1.2.2. Session Management ✓
 - [x] Implement session tracking
 - [x] Add device tracking
 - [x] Create active sessions view
@@ -38,7 +38,7 @@
 - [ ] Implement cascade deletion
 - [ ] Add admin notification
 
-#### 1.2.4. Password Requirements [⏳]
+#### 1.2.4. Password Requirements [WIP]
 - [ ] Implement password strength meter
 - [ ] Add complexity requirements
 - [ ] Create password history
@@ -47,7 +47,7 @@
 - [ ] Add password recovery options
 - [ ] Create password guidelines
 
-#### 1.2.5. Security Features [⏳]
+#### 1.2.5. Security Features [WIP]
 - [ ] Add login attempt tracking
 - [ ] Implement IP-based blocking
 - [ ] Add suspicious activity detection
@@ -56,7 +56,7 @@
 - [ ] Add security questions
 - [ ] Create account recovery process
 
-#### 1.2.6. User Profile Enhancement [⏳]
+#### 1.2.6. User Profile Enhancement [WIP]
 - [ ] Add profile completeness indicator
 - [ ] Create profile verification system
 - [ ] Add contact preferences
@@ -65,7 +65,7 @@
 - [ ] Create account linking options
 - [ ] Add professional verification
 
-#### 1.2.7. Testing & Validation [⏳]
+#### 1.2.7. Testing & Validation [WIP]
 - [ ] Create auth flow tests
 - [ ] Add security testing
 - [ ] Implement e2e testing
@@ -75,7 +75,7 @@
 - [ ] Implement penetration testing
 
 ## 2. Dashboard [IN PROGRESS]
-### 2.1. Layout & Structure [⏳]
+### 2.1. Layout & Structure [WIP]
 - [ ] Global navigation
 - [ ] Sidebar implementation
 - [ ] Breadcrumb system
@@ -83,7 +83,7 @@
 - [ ] Dark/Light mode toggle
 - [ ] User profile section
 
-### 2.2. Dashboard Components [⏳]
+### 2.2. Dashboard Components [WIP]
 - [ ] Stats cards with charts
 - [ ] Activity feed
 - [ ] Quick actions menu
@@ -135,7 +135,7 @@
 - [ ] Email reports
 
 ## 6. API & Backend [IN PROGRESS]
-### 6.1. Core API [⏳]
+### 6.1. Core API [WIP]
 - [x] Auth endpoints
 - [ ] User endpoints
 - [ ] Listing endpoints
@@ -161,25 +161,25 @@
 - [ ] Logging system
 - [ ] Backup strategy
 
-## Notes:
+## Notes
 - ✓ = Complete
-- ⏳ = In Progress
-- PENDING = Not Started
+- [WIP] = Work in Progress
+- [PENDING] = Not Started
 
-## Priority Queue:
+## Priority Queue
 1. Complete dashboard UI/UX
 2. Implement listing management
 3. Set up analytics
 4. Add testing infrastructure
 5. Deploy staging environment
 
-## Recent Updates:
+## Recent Updates
 - [DATE] Added auth system
 - [DATE] Implemented basic dashboard
 - [DATE] Added dark mode support
 
-## Next Steps:
+## Next Steps
 1. Enhance dashboard with charts
 2. Add notification system
 3. Implement search functionality
-4. Set up testing framework 
+4. Set up testing framework

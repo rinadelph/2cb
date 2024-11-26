@@ -1,131 +1,151 @@
-import { NextPage } from 'next';
-import { useRouter } from 'next/router';
-import { Layout } from '@/components/Layout';
-import { useListings } from '@/hooks/useListings';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
-import { Loader2, Search, Plus } from 'lucide-react';
-import { motion } from 'framer-motion';
+import { Layout } from "@/components/Layout";
+import { useAuth } from "@/lib/auth/auth-context";
+import { useEffect, useState } from "react";
+import { motion } from "framer-motion";
+import { Button } from "@/components/ui/button";
+import { useRouter } from "next/router";
+import { Plus } from "lucide-react";
+import { getTestListings } from "@/lib/services/listings";
+import { supabase } from "@/lib/supabase-client";
+import Image from "next/image";
+import { ImageIcon } from "lucide-react";
 
-const ListingsPage: NextPage = () => {
+interface Listing {
+  id: string;
+  title: string;
+  description: string;
+  price: string;
+  address_street: string;
+  city: string;
+  state: string;
+  images: string[];
+  created_at: string;
+}
+
+export default function ListingsPage() {
+  const { user } = useAuth();
   const router = useRouter();
-  const { listings, isLoading, error } = useListings();
+  const [listings, setListings] = useState<Listing[]>([]);
+  const [loading, setLoading] = useState(true);
 
-  if (isLoading) {
-    return (
-      <Layout>
-        <div className="flex justify-center items-center min-h-[60vh]">
-          <Loader2 className="h-8 w-8 animate-spin" />
-        </div>
-      </Layout>
-    );
-  }
+  useEffect(() => {
+    async function fetchListings() {
+      if (!user?.id) return;
 
-  if (error) {
-    return (
-      <Layout>
-        <div className="text-center text-red-600">
-          Error: {error instanceof Error ? error.message : 'Something went wrong'}
-        </div>
-      </Layout>
-    );
-  }
+      try {
+        setLoading(true);
+        
+        // Get test listings first
+        const testListings = getTestListings(user.id);
+        console.log('Test listings:', testListings);
+
+        // Get database listings
+        const { data: dbListings, error } = await supabase
+          .from('listings')
+          .select('*')
+          .eq('user_id', user.id)
+          .order('created_at', { ascending: false });
+
+        if (error) throw error;
+        console.log('DB listings:', dbListings);
+
+        // Combine and sort all listings
+        const allListings = [...testListings, ...(dbListings || [])].sort(
+          (a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
+        );
+
+        console.log('All listings:', allListings);
+        setListings(allListings);
+      } catch (error) {
+        console.error('Error fetching listings:', error);
+      } finally {
+        setLoading(false);
+      }
+    }
+
+    fetchListings();
+  }, [user?.id]);
 
   return (
     <Layout>
-      <div className="container mx-auto px-4 py-8">
-        {/* Header Section */}
-        <div className="flex flex-col md:flex-row justify-between items-center mb-8 gap-4">
+      <div className="container max-w-7xl mx-auto p-6 space-y-8">
+        <div className="flex items-center justify-between">
           <div>
-            <h1 className="text-3xl font-bold text-gray-900">Listings</h1>
-            <p className="text-muted-foreground mt-1">
-              Browse and search through available properties
+            <h1 className="text-3xl font-bold tracking-tight">My Listings</h1>
+            <p className="text-muted-foreground">
+              Manage and track your property listings
             </p>
           </div>
-          <div className="flex gap-4">
-            <div className="relative">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
-              <Input
-                placeholder="Search listings..."
-                className="pl-10 w-[300px]"
-              />
-            </div>
-            <Button
-              onClick={() => router.push('/listings/create')}
-              className="flex items-center gap-2"
-            >
-              <Plus className="h-4 w-4" /> New Listing
-            </Button>
-          </div>
+          <Button onClick={() => router.push('/listings/create')}>
+            <Plus className="mr-2 h-4 w-4" />
+            Add Listing
+          </Button>
         </div>
 
-        {/* Listings Grid */}
-        <motion.div 
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ duration: 0.3 }}
-          className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"
-        >
-          {listings && listings.length > 0 ? (
-            listings.map((listing) => (
-              <Card 
+        {loading ? (
+          <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+            {[1, 2, 3].map((n) => (
+              <div
+                key={n}
+                className="h-[300px] rounded-lg bg-muted animate-pulse"
+              />
+            ))}
+          </div>
+        ) : listings.length > 0 ? (
+          <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+            {listings.map((listing) => (
+              <motion.div
                 key={listing.id}
-                className="group hover:shadow-lg transition-shadow duration-200"
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                whileHover={{ scale: 1.02 }}
+                className="group cursor-pointer"
+                onClick={() => router.push(`/listings/${listing.id}`)}
               >
-                {listing.image_url && (
-                  <div className="relative h-48 overflow-hidden rounded-t-lg">
-                    <img
-                      src={listing.image_url}
+                <div className="relative aspect-[4/3] rounded-lg overflow-hidden bg-muted">
+                  {listing.images && listing.images.length > 0 ? (
+                    <Image
+                      src={listing.images[0]}
                       alt={listing.title}
-                      className="object-cover w-full h-full group-hover:scale-105 transition-transform duration-200"
+                      fill
+                      className="object-cover"
                     />
+                  ) : (
+                    <div className="absolute inset-0 flex items-center justify-center">
+                      <ImageIcon className="h-12 w-12 text-muted-foreground" />
+                    </div>
+                  )}
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-black/0" />
+                  <div className="absolute bottom-0 p-4 text-white">
+                    <h3 className="text-lg font-semibold group-hover:text-primary transition-colors">
+                      {listing.title}
+                    </h3>
+                    <p className="text-sm opacity-90">
+                      {listing.address_street}, {listing.city}, {listing.state}
+                    </p>
+                    <p className="text-lg font-bold mt-1">
+                      ${Number(listing.price).toLocaleString()}
+                    </p>
                   </div>
-                )}
-                <CardHeader>
-                  <CardTitle className="line-clamp-1">{listing.title}</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <p className="text-2xl font-bold text-primary">
-                    ${listing.price.toLocaleString()}
-                  </p>
-                  <p className="text-muted-foreground line-clamp-2 mt-2">
-                    {listing.description}
-                  </p>
-                </CardContent>
-                <CardFooter className="flex justify-between">
-                  <Button
-                    variant="outline"
-                    onClick={() => router.push(`/listings/${listing.id}`)}
-                  >
-                    View Details
-                  </Button>
-                  <Button
-                    variant="secondary"
-                    onClick={() => router.push(`/listings/manage`)}
-                  >
-                    Manage
-                  </Button>
-                </CardFooter>
-              </Card>
-            ))
-          ) : (
-            <div className="col-span-full text-center py-12">
-              <div className="max-w-sm mx-auto">
-                <h3 className="text-lg font-semibold mb-2">No listings found</h3>
-                <p className="text-muted-foreground mb-4">
-                  Get started by creating your first property listing
-                </p>
-                <Button onClick={() => router.push('/listings/create')}>
-                  Create Listing
-                </Button>
-              </div>
-            </div>
-          )}
-        </motion.div>
+                </div>
+              </motion.div>
+            ))}
+          </div>
+        ) : (
+          <div className="text-center py-12">
+            <h3 className="text-lg font-semibold">No listings found</h3>
+            <p className="text-muted-foreground">
+              Create your first listing to get started
+            </p>
+            <Button
+              onClick={() => router.push('/listings/create')}
+              className="mt-4"
+            >
+              Create Listing
+            </Button>
+          </div>
+        )}
       </div>
     </Layout>
   );
-};
-
-export default ListingsPage;
+}
