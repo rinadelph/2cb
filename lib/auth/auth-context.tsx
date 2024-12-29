@@ -1,9 +1,8 @@
-import { createContext, useContext, useEffect, useState } from 'react'
+import { createContext, useContext, useEffect, useState, useRef, useCallback } from 'react'
 import { supabase } from '@/lib/supabase-client'
 import { useRouter } from 'next/router'
 import { Session, User, AuthChangeEvent } from '@supabase/supabase-js'
 import { debounce } from 'lodash'
-import { authLogger } from '@/lib/auth/auth-logger'
 import { logger } from '@/lib/debug'
 
 interface AuthContextType {
@@ -26,53 +25,39 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null)
   const [session, setSession] = useState<Session | null>(null)
   const [loading, setLoading] = useState(true)
-  const [isNavigating, setIsNavigating] = useState(false)
+  const navigationInProgress = useRef(false)
   const router = useRouter()
 
-  // Debounced navigation function
-  const debouncedNavigate = debounce((path: string) => {
-    if (!isNavigating) {
-      setIsNavigating(true)
-      router.push(path).finally(() => {
-        setIsNavigating(false)
-      })
-    }
-  }, 300)
+  const navigate = useCallback((path: string) => {
+    if (navigationInProgress.current) return
+    navigationInProgress.current = true
+    
+    router.push(path).finally(() => {
+      navigationInProgress.current = false
+    })
+  }, [router])
 
   useEffect(() => {
     const initializeAuth = async () => {
       try {
         logger.info('Initializing auth context')
         const { data: { session: initialSession } } = await supabase.auth.getSession()
-        logger.info('Initial session loaded:', { 
-          hasSession: !!initialSession,
-          user: initialSession?.user?.email 
-        })
-        setSession(initialSession)
-        setUser(initialSession?.user ?? null)
         
-        // Listen for auth changes with proper types
-        const handleAuthChange = debounce((
-          event: AuthChangeEvent, 
-          session: Session | null
-        ) => {
-          logger.info('Auth state change detected:', { 
-            event, 
-            user: session?.user?.email,
-            path: window.location.pathname
-          })
-          setUser(session?.user || null)
-          setSession(session)
-          setLoading(false)
-        }, 300)
-
-        const { data: { subscription } } = supabase.auth.onAuthStateChange(handleAuthChange)
+        if (initialSession) {
+          setUser(initialSession.user)
+          setSession(initialSession)
+        }
+        
+        const { data: { subscription } } = supabase.auth.onAuthStateChange(
+          async (event, session) => {
+            logger.info('Auth state change:', { event, user: session?.user?.email })
+            setUser(session?.user || null)
+            setSession(session)
+          }
+        )
 
         setLoading(false)
-        return () => {
-          logger.info('Cleaning up auth subscriptions')
-          subscription.unsubscribe()
-        }
+        return () => subscription.unsubscribe()
       } catch (error) {
         logger.error('Error initializing auth:', error)
         setLoading(false)
@@ -82,65 +67,41 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     initializeAuth()
   }, [])
 
-  // Handle auth state changes and navigation
   useEffect(() => {
-    if (loading || isNavigating) return
+    if (loading || navigationInProgress.current) return
 
-    const currentPath = window.location.pathname
-    const isAuthPage = currentPath.startsWith('/login') || 
-                      currentPath.startsWith('/signup') ||
-                      currentPath.startsWith('/auth/')
-
-    logger.info('Checking navigation:', {
-      currentPath,
-      isAuthPage,
-      hasUser: !!user,
-      isNavigating
-    })
+    const isAuthPage = router.pathname.startsWith('/login') || 
+                      router.pathname.startsWith('/signup') ||
+                      router.pathname.startsWith('/auth/')
 
     if (!user && !isAuthPage) {
-      logger.info('Redirecting to login - no user')
-      debouncedNavigate('/login')
+      navigate('/login')
     } else if (user && isAuthPage) {
-      logger.info('Redirecting to dashboard - user authenticated')
-      debouncedNavigate('/dashboard')
+      navigate('/dashboard')
     }
-  }, [user, loading, isNavigating])
+  }, [user, loading, router.pathname, navigate])
 
   const signIn = async (email: string, password: string) => {
     try {
-      logger.info('Sign in attempt:', { email })
       const { data, error } = await supabase.auth.signInWithPassword({
         email,
         password,
       })
       
-      if (error) {
-        logger.error('Sign in failed:', error)
-        return { error }
-      }
+      if (error) return { error }
 
-      logger.info('Sign in successful:', { 
-        user: data.user?.email,
-        path: window.location.pathname
-      })
-      setUser(data.user)
-      setSession(data.session)
       return { error: null }
     } catch (error) {
-      logger.error('Unexpected error during sign in:', error)
       return { error: error as Error }
     }
   }
 
   const signOut = async () => {
     try {
-      logger.info('Sign out initiated')
       await supabase.auth.signOut()
       setUser(null)
       setSession(null)
-      debouncedNavigate('/login')
-      logger.info('Sign out successful')
+      navigate('/login')
     } catch (error) {
       logger.error('Error signing out:', error)
     }
