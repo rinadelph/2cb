@@ -26,7 +26,18 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null)
   const [session, setSession] = useState<Session | null>(null)
   const [loading, setLoading] = useState(true)
+  const [isNavigating, setIsNavigating] = useState(false)
   const router = useRouter()
+
+  // Debounced navigation function
+  const debouncedNavigate = debounce((path: string) => {
+    if (!isNavigating) {
+      setIsNavigating(true)
+      router.push(path).finally(() => {
+        setIsNavigating(false)
+      })
+    }
+  }, 300)
 
   useEffect(() => {
     const initializeAuth = async () => {
@@ -73,33 +84,28 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   // Handle auth state changes and navigation
   useEffect(() => {
-    logger.info('Auth state changed:', { 
-      hasUser: !!user, 
-      loading,
-      path: window.location.pathname
+    if (loading || isNavigating) return
+
+    const currentPath = window.location.pathname
+    const isAuthPage = currentPath.startsWith('/login') || 
+                      currentPath.startsWith('/signup') ||
+                      currentPath.startsWith('/auth/')
+
+    logger.info('Checking navigation:', {
+      currentPath,
+      isAuthPage,
+      hasUser: !!user,
+      isNavigating
     })
 
-    if (!loading) {
-      const currentPath = window.location.pathname
-      const isAuthPage = currentPath.startsWith('/login') || 
-                        currentPath.startsWith('/signup') ||
-                        currentPath.startsWith('/auth/')
-
-      logger.info('Checking navigation:', {
-        currentPath,
-        isAuthPage,
-        hasUser: !!user
-      })
-
-      if (!user && !isAuthPage) {
-        logger.info('Redirecting to login - no user')
-        router.push('/login')
-      } else if (user && isAuthPage) {
-        logger.info('Redirecting to dashboard - user authenticated')
-        router.push('/dashboard')
-      }
+    if (!user && !isAuthPage) {
+      logger.info('Redirecting to login - no user')
+      debouncedNavigate('/login')
+    } else if (user && isAuthPage) {
+      logger.info('Redirecting to dashboard - user authenticated')
+      debouncedNavigate('/dashboard')
     }
-  }, [user, loading, router])
+  }, [user, loading, isNavigating])
 
   const signIn = async (email: string, password: string) => {
     try {
@@ -133,7 +139,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       await supabase.auth.signOut()
       setUser(null)
       setSession(null)
-      router.push('/login')
+      debouncedNavigate('/login')
       logger.info('Sign out successful')
     } catch (error) {
       logger.error('Error signing out:', error)
