@@ -5,7 +5,7 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
 import Link from 'next/link';
-import { supabase } from '@/lib/supabase-client';
+import { useAuth } from '@/lib/auth/auth-context';
 import { Button } from '@/components/ui/button';
 import {
   Form,
@@ -31,6 +31,7 @@ export default function LoginPage() {
   const { toast } = useToast();
   const [isLoading, setIsLoading] = useState(false);
   const { isReady: isWalletReady } = useWallet();
+  const { signIn } = useAuth();
 
   const form = useForm<LoginFormValues>({
     resolver: zodResolver(loginSchema),
@@ -49,10 +50,7 @@ export default function LoginPage() {
         throw new Error('Please ensure your wallet is connected');
       }
 
-      const { error } = await supabase.auth.signInWithPassword({
-        email: data.email,
-        password: data.password,
-      });
+      const { error } = await signIn(data.email, data.password);
 
       if (error) {
         throw error;

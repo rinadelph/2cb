@@ -11,10 +11,12 @@ import { Checkbox } from '@/components/ui/checkbox'
 import Link from 'next/link'
 import { Card, CardContent, CardFooter, CardHeader } from '@/components/ui/card'
 import { Loader2 } from 'lucide-react'
+import { useRouter } from 'next/router'
 
 export function LoginForm() {
   const { signIn } = useAuth()
   const { toast } = useToast()
+  const router = useRouter()
   const [isLoading, setIsLoading] = useState<boolean>(false)
   const [formError, setFormError] = useState<string | null>(null)
   const [rememberMe, setRememberMe] = useState<boolean>(() => {
@@ -55,6 +57,20 @@ export function LoginForm() {
           title: "Login failed",
           description: error.message || "Invalid login credentials",
         })
+      } else {
+        // Save remember me preference
+        try {
+          localStorage.setItem('rememberMe', rememberMe.toString())
+        } catch (err) {
+          console.error('Failed to save remember me preference:', err)
+        }
+
+        toast({
+          title: "Success",
+          description: "Successfully signed in",
+        })
+
+        // Let the auth context handle the redirection
       }
     } catch (err) {
       logger.error('Unexpected error in login form:', err)
