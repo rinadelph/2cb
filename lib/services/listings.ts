@@ -1,262 +1,326 @@
 import { supabase } from "@/lib/supabase-client";
 import { ListingFormValues } from "@/lib/schemas/listing-schema";
+import { ListingResponse } from "@/types/listing";
 
-// Add sample gallery images
-const SAMPLE_IMAGES = [
-  "https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?q=80&w=2075&auto=format&fit=crop",
-  "https://images.unsplash.com/photo-1600607687939-ce8a6c25118c?q=80&w=2053&auto=format&fit=crop",
-  "https://images.unsplash.com/photo-1600607687644-aac4c3eac7f4?q=80&w=2053&auto=format&fit=crop",
-  "https://images.unsplash.com/photo-1600566753190-17f0baa2a6c3?q=80&w=2070&auto=format&fit=crop",
-  "https://images.unsplash.com/photo-1600585154340-be6161a56a0c?q=80&w=2070&auto=format&fit=crop"
-];
-
-// Update the test data to match the schema
-export const TEST_LISTING_DATA: Partial<ListingFormValues> = {
-  title: "Luxury Test Property in Miami Beach",
-  description: "Beautiful test property with amazing views",
-  mls_number: "TEST123456",
-  status: "draft",
-  address_street: "1234 Test Beach Drive",
-  address_unit: "PH-1",
-  city: "Miami Beach",
-  state: "FL",
-  zip_code: "33139",
-  county: "Miami-Dade",
-  folio_number: "01-1234-567-8910",
-  parcel_number: "12345",
-  legal_description: "Test Legal Description",
-  property_type: "single_family",
-  year_built: "2020",
-  bedrooms: "4",
-  bathrooms_full: "3",
-  bathrooms_half: "1",
-  square_feet_living: "3500",
-  square_feet_total: "4000",
-  lot_size_sf: "7500",
-  garage_spaces: "2",
-  carport_spaces: "0",
-  furnished: true,
-  pool: true,
-  waterfront: true,
-  water_access: true,
-  construction_type: ["concrete_block"],
-  interior_features: ["Walk-in Closets", "Built-ins", "Smart Home"],
-  exterior_features: ["Pool", "Patio", "Summer Kitchen"],
-  parking_description: ["2 Car Garage", "Circular Driveway"],
-  lot_description: ["Corner Lot", "Gated Community"],
-  price: "2500000",
-  tax_amount: "25000",
-  tax_year: "2024",
-  maintenance_fee: "1000",
-  special_assessment: false,
-  images: SAMPLE_IMAGES,
-  virtual_tour_url: "https://example.com/tour",
-  broker_remarks: "Test broker remarks",
-  showing_instructions: "Call for appointment",
-  listing_office: "Test Realty Group",
-  listing_agent_name: "John Test",
-  listing_agent_phone: "305-555-1234",
-  listing_agent_email: "test@example.com",
-  listing_agent_license: "TEST123"
-};
-
-// Add function to save test listing locally
-export function saveTestListingLocally(userId: string) {
+export async function getListing(id: string): Promise<ListingResponse> {
   try {
-    const listingId = `test-${Date.now()}`;
-    const listing = {
-      id: listingId,
-      ...TEST_LISTING_DATA,
-      user_id: userId,
-      created_at: new Date().toISOString(),
-      updated_at: new Date().toISOString(),
-      images: SAMPLE_IMAGES,
-      features: {
-        interior: TEST_LISTING_DATA.interior_features || [],
-        exterior: TEST_LISTING_DATA.exterior_features || [],
-        construction: TEST_LISTING_DATA.construction_type || [],
-        parking: TEST_LISTING_DATA.parking_description || [],
-        lot: TEST_LISTING_DATA.lot_description || []
-      },
-      metadata: {
-        submission_date: new Date().toISOString(),
-        last_edited: new Date().toISOString(),
-        status_history: [{
-          status: TEST_LISTING_DATA.status || 'draft',
-          timestamp: new Date().toISOString()
-        }]
-      }
-    };
+    // Get main listing data
+    const { data: listing, error: listingError } = await supabase
+      .from('listings')
+      .select('*')
+      .eq('id', id)
+      .single();
 
-    // Save to localStorage
-    const existingListings = JSON.parse(localStorage.getItem('test_listings') || '[]');
-    const updatedListings = [...existingListings, listing];
-    localStorage.setItem('test_listings', JSON.stringify(updatedListings));
+    if (listingError) throw listingError;
 
-    console.log('Saved test listing:', listing);
-    console.log('All listings:', updatedListings);
+    // Get listing features
+    const { data: features, error: featuresError } = await supabase
+      .from('listing_features')
+      .select('*')
+      .eq('listing_id', id)
+      .single();
 
-    return { listing, error: null };
+    if (featuresError) throw featuresError;
+
+    // Get listing images
+    const { data: images, error: imagesError } = await supabase
+      .from('listing_images')
+      .select('*')
+      .eq('listing_id', id)
+      .order('position');
+
+    if (imagesError) throw imagesError;
+
+    // Convert numeric fields
+    const formattedListing: ListingFormValues = {
+      ...listing,
+      price: Number(listing.price) || 0,
+      tax_amount: Number(listing.tax_amount) || 0,
+      maintenance_fee: Number(listing.maintenance_fee) || 0,
+      square_feet_living: Number(listing.square_feet_living) || 0,
+      square_feet_total: Number(listing.square_feet_total) || 0,
+      lot_size_sf: Number(listing.lot_size_sf) || 0,
+      bedrooms: Number(listing.bedrooms) || 0,
+      bathrooms_full: Number(listing.bathrooms_full) || 0,
+      bathrooms_half: Number(listing.bathrooms_half) || 0,
+      garage_spaces: Number(listing.garage_spaces) || 0,
+      carport_spaces: Number(listing.carport_spaces) || 0,
+      construction_type: features?.construction_type || [],
+      interior_features: features?.interior_features || [],
+      exterior_features: features?.exterior_features || [],
+      parking_description: features?.parking_description || [],
+      lot_description: features?.lot_description || [],
+      images: images?.map(img => img.url) || []
+    } as ListingFormValues;
+
+    return { listing: formattedListing, error: null };
   } catch (error) {
-    console.error('Error saving test listing:', error);
-    return { 
-      listing: null, 
-      error: error instanceof Error ? error : new Error('Failed to save test listing')
+    console.error('Error getting listing:', error);
+    return {
+      listing: null,
+      error: error instanceof Error ? error : new Error('Failed to get listing')
     };
   }
 }
 
-// Add function to get test listings with better logging
-export function getTestListings(userId: string) {
-  try {
-    const listings = JSON.parse(localStorage.getItem('test_listings') || '[]');
-    const userListings = listings.filter((listing: any) => listing.user_id === userId);
-    console.log('Getting test listings for user:', userId);
-    console.log('Found listings:', userListings);
-    return userListings;
-  } catch (error) {
-    console.error('Error getting test listings:', error);
-    return [];
-  }
-}
-
-export async function createListing(data: Partial<ListingFormValues>, userId: string) {
+export async function updateListing(id: string, data: Partial<ListingFormValues>, userId: string): Promise<ListingResponse> {
   try {
     if (!userId) {
       throw new Error('User ID is required');
     }
 
-    // Format the data for database insertion
-    const listingData = {
+    // Convert numeric fields to strings for database storage
+    const formattedData = {
       ...data,
-      user_id: userId, // Use the passed userId directly
-      created_at: new Date().toISOString(),
-      updated_at: new Date().toISOString(),
-      status: data.status || 'draft',
-      property_type: data.property_type || 'single_family',
-      features: {
-        interior: data.interior_features || [],
-        exterior: data.exterior_features || [],
-        construction: data.construction_type || [],
-        parking: data.parking_description || [],
-        lot: data.lot_description || []
-      },
-      metadata: {
-        submission_date: new Date().toISOString(),
-        last_edited: new Date().toISOString(),
-        status_history: [{
-          status: data.status || 'draft',
-          timestamp: new Date().toISOString()
-        }]
-      }
+      price: data.price?.toString(),
+      tax_amount: data.tax_amount?.toString(),
+      maintenance_fee: data.maintenance_fee?.toString(),
+      square_feet_living: data.square_feet_living?.toString(),
+      square_feet_total: data.square_feet_total?.toString(),
+      lot_size_sf: data.lot_size_sf?.toString(),
+      bedrooms: data.bedrooms?.toString(),
+      bathrooms_full: data.bathrooms_full?.toString(),
+      bathrooms_half: data.bathrooms_half?.toString(),
+      garage_spaces: data.garage_spaces?.toString(),
+      carport_spaces: data.carport_spaces?.toString(),
     };
 
-    // Remove fields that are stored in features/metadata
-    const cleanedData = {
-      ...listingData,
-      interior_features: undefined,
-      exterior_features: undefined,
-      construction_type: undefined,
-      parking_description: undefined,
-      lot_description: undefined
-    };
-
-    console.log('Creating listing with data:', cleanedData);
-
-    // Insert the listing
-    const { data: listing, error } = await supabase
+    // Update main listing
+    const { data: listing, error: listingError } = await supabase
       .from('listings')
-      .insert([cleanedData])
-      .select('*')
+      .update(formattedData)
+      .eq('id', id)
+      .eq('user_id', userId)
+      .select()
       .single();
 
-    if (error) {
-      console.error('Supabase error:', error);
-      throw new Error(error.message);
+    if (listingError) throw listingError;
+
+    if (listing) {
+      // Update listing features
+      const { error: featuresError } = await supabase
+        .from('listing_features')
+        .upsert({
+          listing_id: id,
+          construction_type: data.construction_type || [],
+          interior_features: data.interior_features || [],
+          exterior_features: data.exterior_features || [],
+          parking_description: data.parking_description || [],
+          lot_description: data.lot_description || []
+        });
+
+      if (featuresError) throw featuresError;
+
+      // Update listing images
+      if (data.images) {
+        // Delete existing images
+        await supabase
+          .from('listing_images')
+          .delete()
+          .eq('listing_id', id);
+
+        // Insert new images
+        const imageInserts = data.images.map((url, index) => ({
+          listing_id: id,
+          url,
+          position: index
+        }));
+
+        const { error: imagesError } = await supabase
+          .from('listing_images')
+          .insert(imageInserts);
+
+        if (imagesError) throw imagesError;
+      }
     }
 
-    if (!listing) {
-      throw new Error('No listing returned from database');
-    }
-
-    return { listing, error: null };
-  } catch (error) {
-    console.error('Error details:', error);
     return { 
-      listing: null, 
+      listing: {
+        ...listing,
+        price: Number(listing.price) || 0,
+        bedrooms: Number(listing.bedrooms) || 0,
+      } as ListingFormValues, 
+      error: null 
+    };
+  } catch (error) {
+    console.error('Error updating listing:', error);
+    return {
+      listing: null,
+      error: error instanceof Error ? error : new Error('Failed to update listing')
+    };
+  }
+}
+
+export const getTestListings = async (userId: string) => {
+  try {
+    const { data, error } = await supabase
+      .from('listings')
+      .select(`
+        *,
+        listing_features (*),
+        listing_images (*)
+      `)
+      .eq('user_id', userId)
+      .ilike('mls_number', 'TEST%')  // Filter for test listings by MLS number prefix
+      .order('created_at', { ascending: false });
+
+    if (error) {
+      console.error('Error fetching test listings:', error);
+      throw error;
+    }
+
+    // Format the listings to match the expected structure
+    const formattedListings = data?.map(listing => ({
+      ...listing,
+      price: Number(listing.price) || 0,
+      tax_amount: Number(listing.tax_amount) || 0,
+      maintenance_fee: Number(listing.maintenance_fee) || 0,
+      square_feet_living: Number(listing.square_feet_living) || 0,
+      square_feet_total: Number(listing.square_feet_total) || 0,
+      lot_size_sf: Number(listing.lot_size_sf) || 0,
+      bedrooms: Number(listing.bedrooms) || 0,
+      bathrooms_full: Number(listing.bathrooms_full) || 0,
+      bathrooms_half: Number(listing.bathrooms_half) || 0,
+      garage_spaces: Number(listing.garage_spaces) || 0,
+      carport_spaces: Number(listing.carport_spaces) || 0,
+      images: listing.listing_images?.map(img => img.url) || []
+    })) || [];
+
+    return formattedListings;
+  } catch (error) {
+    console.error('Error in getTestListings:', error);
+    return [];
+  }
+};
+
+export async function createListing(data: ListingFormValues, userId: string): Promise<ListingResponse> {
+  try {
+    if (!userId) {
+      throw new Error('User ID is required');
+    }
+
+    // Convert numeric fields to strings for database storage
+    const formattedData = {
+      ...data,
+      user_id: userId,
+      price: data.price.toString(),
+      tax_amount: data.tax_amount?.toString(),
+      maintenance_fee: data.maintenance_fee?.toString(),
+      square_feet_living: data.square_feet_living?.toString(),
+      square_feet_total: data.square_feet_total?.toString(),
+      lot_size_sf: data.lot_size_sf?.toString(),
+      bedrooms: data.bedrooms?.toString(),
+      bathrooms_full: data.bathrooms_full?.toString(),
+      bathrooms_half: data.bathrooms_half?.toString(),
+      garage_spaces: data.garage_spaces?.toString(),
+      carport_spaces: data.carport_spaces?.toString(),
+    };
+
+    // Create main listing
+    const { data: listing, error: listingError } = await supabase
+      .from('listings')
+      .insert([formattedData])
+      .select()
+      .single();
+
+    if (listingError) throw listingError;
+
+    if (listing) {
+      // Create listing features
+      const { error: featuresError } = await supabase
+        .from('listing_features')
+        .insert([{
+          listing_id: listing.id,
+          construction_type: data.construction_type,
+          interior_features: data.interior_features,
+          exterior_features: data.exterior_features,
+          parking_description: data.parking_description,
+          lot_description: data.lot_description
+        }]);
+
+      if (featuresError) throw featuresError;
+
+      // Create listing images
+      if (data.images && data.images.length > 0) {
+        const imageInserts = data.images.map((url, index) => ({
+          listing_id: listing.id,
+          url,
+          position: index
+        }));
+
+        const { error: imagesError } = await supabase
+          .from('listing_images')
+          .insert(imageInserts);
+
+        if (imagesError) throw imagesError;
+      }
+    }
+
+    return { 
+      listing: {
+        ...listing,
+        price: Number(listing.price) || 0,
+        bedrooms: Number(listing.bedrooms) || 0,
+      } as ListingFormValues, 
+      error: null 
+    };
+  } catch (error) {
+    console.error('Error creating listing:', error);
+    return {
+      listing: null,
       error: error instanceof Error ? error : new Error('Failed to create listing')
     };
   }
 }
 
-export async function uploadListingImages(files: File[], listingId: string) {
-  try {
-    const uploadedUrls: string[] = [];
+export async function createTestListing(userId: string): Promise<ListingResponse> {
+  const testData: ListingFormValues = {
+    title: "Test Luxury Waterfront Villa",
+    description: "A stunning waterfront property perfect for luxury living. This test listing showcases all features of our platform.",
+    mls_number: "TEST" + Math.floor(Math.random() * 10000),
+    status: "draft",
+    address: "123 Test Beach Road",
+    city: "Miami Beach",
+    state: "FL",
+    zip_code: "33139",
+    county: "Miami-Dade",
+    property_type: "single_family",
+    year_built: "2020",
+    bedrooms: 5,
+    bathrooms_full: 4,
+    bathrooms_half: 1,
+    square_feet_living: 4500,
+    square_feet_total: 6000,
+    lot_size_sf: 10000,
+    garage_spaces: 2,
+    carport_spaces: 0,
+    furnished: true,
+    pool: true,
+    waterfront: true,
+    water_access: true,
+    construction_type: ["CBS", "Impact Windows"],
+    interior_features: ["Smart Home", "Wine Cellar", "Chef's Kitchen"],
+    exterior_features: ["Pool", "Summer Kitchen", "Dock"],
+    parking_description: ["2 Car Garage", "Circular Driveway"],
+    lot_description: ["Waterfront", "Gated", "Landscaped"],
+    price: 2500000,
+    tax_amount: 25000,
+    tax_year: "2023",
+    maintenance_fee: 0,
+    special_assessment: false,
+    virtual_tour_url: "https://example.com/tour",
+    broker_remarks: "Test listing for demonstration purposes",
+    showing_instructions: "Contact agent for showing",
+    listing_office: "Test Luxury Realty",
+    listing_agent_name: "Test Agent",
+    listing_agent_phone: "(305) 555-0123",
+    listing_agent_email: "test@example.com",
+    listing_agent_license: "TEST12345",
+    images: [
+      "https://images.unsplash.com/photo-1512917774080-9991f1c4c750",
+      "https://images.unsplash.com/photo-1613490493576-7fde63acd811"
+    ]
+  };
 
-    for (const file of files) {
-      const fileExt = file.name.split('.').pop();
-      const fileName = `${listingId}/${Math.random()}.${fileExt}`;
-      const filePath = `listings/${fileName}`;
-
-      const { error: uploadError } = await supabase.storage
-        .from('listings')
-        .upload(filePath, file);
-
-      if (uploadError) throw uploadError;
-
-      const { data: { publicUrl } } = supabase.storage
-        .from('listings')
-        .getPublicUrl(filePath);
-
-      uploadedUrls.push(publicUrl);
-    }
-
-    return { urls: uploadedUrls, error: null };
-  } catch (error) {
-    console.error('Error uploading images:', error);
-    return { 
-      urls: [], 
-      error: error instanceof Error ? error : new Error('Failed to upload images')
-    };
-  }
-}
-
-export async function updateListingStatus(
-  listingId: string, 
-  status: ListingFormValues['status'],
-  userId: string
-) {
-  try {
-    const updates = {
-      status,
-      updated_at: new Date().toISOString(),
-      ...(status === 'active' && { published_at: new Date().toISOString() }),
-      ...(status === 'sold' && { sold_at: new Date().toISOString() }),
-      metadata: {
-        last_edited: new Date().toISOString(),
-        status_history: supabase.sql`array_append(metadata->'status_history', jsonb_build_object(
-          'status', ${status},
-          'timestamp', ${new Date().toISOString()}
-        ))`
-      }
-    };
-
-    const { data, error } = await supabase
-      .from('listings')
-      .update(updates)
-      .eq('id', listingId)
-      .eq('user_id', userId)
-      .select()
-      .single();
-
-    if (error) throw error;
-
-    return { data, error: null };
-  } catch (error) {
-    console.error('Error updating listing status:', error);
-    return { 
-      data: null, 
-      error: error instanceof Error ? error : new Error('Failed to update listing status')
-    };
-  }
+  return createListing(testData, userId);
 } 

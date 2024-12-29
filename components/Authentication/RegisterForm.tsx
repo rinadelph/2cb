@@ -3,7 +3,6 @@
 import { useState } from 'react'
 import { useAuth } from '@/hooks/useAuth'
 import { useToast } from '@/components/ui/use-toast'
-import { logger } from '@/lib/debug'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -14,34 +13,38 @@ import { Loader2 } from 'lucide-react'
 export function RegisterForm() {
   const { signUp } = useAuth()
   const { toast } = useToast()
-  const [isLoading, setIsLoading] = useState<boolean>(false)
+  const [isLoading, setIsLoading] = useState(false)
+  const [formError, setFormError] = useState<string | null>(null)
 
   const onSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault()
+    if (isLoading) return
+
     setIsLoading(true)
+    setFormError(null)
 
     try {
       const formData = new FormData(event.currentTarget)
       const email = formData.get('email') as string
       const password = formData.get('password') as string
 
-      logger.info('Attempting registration', { email })
       const { error } = await signUp(email, password)
 
       if (error) {
+        setFormError(error.message)
         toast({
           variant: "destructive",
           title: "Registration failed",
-          description: error.message || "Could not create account",
+          description: error.message
+        })
+      } else {
+        toast({
+          title: "Check your email",
+          description: "We've sent you a verification link.",
         })
       }
     } catch (err) {
-      logger.error('Unexpected error in registration form:', err)
-      toast({
-        variant: "destructive",
-        title: "An error occurred",
-        description: "Please try again later",
-      })
+      setFormError('An unexpected error occurred')
     } finally {
       setIsLoading(false)
     }
@@ -50,62 +53,61 @@ export function RegisterForm() {
   return (
     <Card className="border-none shadow-lg bg-background">
       <CardHeader className="space-y-1">
-        <h1 className="text-3xl font-bold text-center text-foreground">
-          Create an account
-        </h1>
-        <p className="text-center text-foreground/60">
+        <h1 className="text-3xl font-bold text-center">Create an account</h1>
+        <p className="text-center text-muted-foreground">
           Enter your details to create your account
         </p>
       </CardHeader>
       <form onSubmit={onSubmit}>
         <CardContent className="space-y-4 pt-4">
+          {formError && (
+            <div className="p-3 text-sm text-destructive bg-destructive/10 rounded-md">
+              {formError}
+            </div>
+          )}
           <div className="space-y-2">
-            <Label htmlFor="email" className="text-foreground">
-              Email
-            </Label>
+            <Label htmlFor="email">Email</Label>
             <Input
               id="email"
               name="email"
-              placeholder="name@example.com"
               type="email"
-              autoCapitalize="none"
-              autoComplete="email"
-              autoCorrect="off"
-              disabled={isLoading}
+              placeholder="name@example.com"
               required
-              className="bg-background border-input"
+              disabled={isLoading}
             />
           </div>
           <div className="space-y-2">
-            <Label htmlFor="password" className="text-foreground">
-              Password
-            </Label>
+            <Label htmlFor="password">Password</Label>
             <Input
               id="password"
               name="password"
               type="password"
-              autoCapitalize="none"
-              autoComplete="new-password"
-              autoCorrect="off"
-              disabled={isLoading}
               required
-              className="bg-background border-input"
+              disabled={isLoading}
             />
           </div>
         </CardContent>
         <CardFooter className="flex flex-col space-y-4">
           <Button 
-            type="submit" 
-            className="w-full" 
-            size="lg"
+            type="submit"
+            className="w-full"
             disabled={isLoading}
           >
-            {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-            Create Account
+            {isLoading ? (
+              <>
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                Creating account...
+              </>
+            ) : (
+              'Create Account'
+            )}
           </Button>
-          <p className="text-center text-sm text-foreground/60">
+          <p className="text-center text-sm text-muted-foreground">
             Already have an account?{' '}
-            <Link href="/auth/login" className="text-primary hover:text-primary/80 transition-colors font-medium">
+            <Link 
+              href="/auth/login"
+              className="text-primary hover:text-primary/80 transition-colors font-medium"
+            >
               Sign in
             </Link>
           </p>

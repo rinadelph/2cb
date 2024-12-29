@@ -20,27 +20,32 @@ import { useToast } from '@/components/ui/use-toast';
 import { Loader2 } from 'lucide-react';
 import { useWallet } from '@/lib/wallet/wallet-provider';
 
-const loginSchema = z.object({
+const signupSchema = z.object({
   email: z.string().email('Please enter a valid email address'),
   password: z.string().min(6, 'Password must be at least 6 characters'),
+  confirmPassword: z.string(),
+}).refine((data) => data.password === data.confirmPassword, {
+  message: "Passwords don't match",
+  path: ["confirmPassword"],
 });
 
-type LoginFormValues = z.infer<typeof loginSchema>;
+type SignupFormValues = z.infer<typeof signupSchema>;
 
-export default function LoginPage() {
+export default function SignupPage() {
   const { toast } = useToast();
   const [isLoading, setIsLoading] = useState(false);
   const { isReady: isWalletReady } = useWallet();
 
-  const form = useForm<LoginFormValues>({
-    resolver: zodResolver(loginSchema),
+  const form = useForm<SignupFormValues>({
+    resolver: zodResolver(signupSchema),
     defaultValues: {
       email: '',
       password: '',
+      confirmPassword: '',
     },
   });
 
-  const onSubmit = async (data: LoginFormValues) => {
+  const onSubmit = async (data: SignupFormValues) => {
     try {
       setIsLoading(true);
 
@@ -49,7 +54,7 @@ export default function LoginPage() {
         throw new Error('Please ensure your wallet is connected');
       }
 
-      const { error } = await supabase.auth.signInWithPassword({
+      const { error } = await supabase.auth.signUp({
         email: data.email,
         password: data.password,
       });
@@ -60,13 +65,13 @@ export default function LoginPage() {
 
       toast({
         title: 'Success',
-        description: 'Successfully signed in',
+        description: 'Please check your email to verify your account',
       });
     } catch (error) {
-      console.error('Login error:', error);
+      console.error('Signup error:', error);
       toast({
         title: 'Error',
-        description: error instanceof Error ? error.message : 'Failed to sign in',
+        description: error instanceof Error ? error.message : 'Failed to sign up',
         variant: 'destructive',
       });
     } finally {
@@ -85,7 +90,7 @@ export default function LoginPage() {
         <div className="relative z-20 mt-auto">
           <blockquote className="space-y-2">
             <p className="text-lg">
-              Streamline your property management and brokerage operations with our comprehensive platform.
+              Join our platform to streamline your property management and brokerage operations.
             </p>
           </blockquote>
         </div>
@@ -94,10 +99,10 @@ export default function LoginPage() {
         <div className="mx-auto flex w-full flex-col justify-center space-y-6 sm:w-[350px]">
           <div className="flex flex-col space-y-2 text-center">
             <h1 className="text-2xl font-semibold tracking-tight">
-              Welcome back
+              Create an account
             </h1>
             <p className="text-sm text-muted-foreground">
-              Enter your credentials to sign in
+              Enter your details to sign up
             </p>
           </div>
           <Form {...form}>
@@ -140,35 +145,46 @@ export default function LoginPage() {
                   </FormItem>
                 )}
               />
+              <FormField
+                control={form.control}
+                name="confirmPassword"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Confirm Password</FormLabel>
+                    <FormControl>
+                      <Input
+                        {...field}
+                        type="password"
+                        placeholder="Confirm your password"
+                        disabled={isLoading}
+                        className="bg-gray-800 border-gray-700 text-white placeholder:text-gray-400"
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
               <Button
                 type="submit"
                 className="w-full bg-primary hover:bg-primary/90"
                 disabled={isLoading || !isWalletReady}
               >
                 {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                {!isWalletReady ? 'Waiting for wallet...' : 'Sign In'}
+                {!isWalletReady ? 'Waiting for wallet...' : 'Sign Up'}
               </Button>
             </form>
           </Form>
           <div className="text-center text-sm text-muted-foreground">
+            Already have an account?{' '}
             <Link
-              href="/reset-password"
+              href="/login"
               className="hover:text-primary underline underline-offset-4"
             >
-              Forgot your password?
-            </Link>
-          </div>
-          <div className="text-center text-sm text-muted-foreground">
-            Don&apos;t have an account?{' '}
-            <Link
-              href="/signup"
-              className="hover:text-primary underline underline-offset-4"
-            >
-              Sign up
+              Sign in
             </Link>
           </div>
         </div>
       </div>
     </div>
   );
-}
+} 

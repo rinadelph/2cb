@@ -67,4 +67,4 @@ export interface ListingFormData extends Omit<Listing, 'id' | 'user_id' | 'creat
 export interface ListingResponse {
   listing: ListingFormData | null;
   error: Error | null;
-}
+} 

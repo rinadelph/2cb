@@ -36,15 +36,76 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 
+interface ListingImage {
+  id: string;
+  listing_id: string;
+  url: string;
+  position: number;
+}
+
+interface ListingFeatures {
+  id: string;
+  listing_id: string;
+  construction_type: string[];
+  interior_features: string[];
+  exterior_features: string[];
+  parking_description: string[];
+  lot_description: string[];
+}
+
+interface Listing {
+  id: string;
+  user_id: string;
+  title: string;
+  description: string;
+  mls_number: string;
+  status: string;
+  address: string;
+  address_unit?: string;
+  city: string;
+  state: string;
+  zip_code: string;
+  county: string;
+  property_type: string;
+  year_built: string;
+  bedrooms: number;
+  bathrooms_full: number;
+  bathrooms_half: number;
+  square_feet_living: number;
+  square_feet_total: number;
+  lot_size_sf: number;
+  garage_spaces: number;
+  carport_spaces: number;
+  furnished: boolean;
+  pool: boolean;
+  waterfront: boolean;
+  water_access: boolean;
+  price: number;
+  tax_amount: number;
+  tax_year: string;
+  maintenance_fee: number;
+  special_assessment: boolean;
+  virtual_tour_url?: string;
+  broker_remarks?: string;
+  showing_instructions?: string;
+  listing_office: string;
+  listing_agent_name: string;
+  listing_agent_phone: string;
+  listing_agent_email: string;
+  listing_agent_license: string;
+  created_at: string;
+  updated_at: string;
+  listing_features?: ListingFeatures;
+  listing_images?: ListingImage[];
+  images?: string[];
+}
+
 export default function ListingPage() {
   const [listing, setListing] = useState<Listing | null>(null);
   const [loading, setLoading] = useState(true);
-  const [currentImageIndex, setCurrentImageIndex] = useState(0);
-  const [showCommissionButton, setShowCommissionButton] = useState(false);
   const router = useRouter();
-  const { user } = useAuth();
-  const { toast } = useToast();
   const { id } = router.query;
+  const { toast } = useToast();
 
   useEffect(() => {
     async function fetchListing() {
@@ -53,26 +114,37 @@ export default function ListingPage() {
       try {
         setLoading(true);
         
-        // First check test listings
-        const testListings = getTestListings(user?.id || '');
-        const testListing = testListings.find(l => l.id === id);
-
-        if (testListing) {
-          setListing(testListing);
-          setLoading(false);
-          return;
-        }
-
-        // If not found in test listings, check database
+        // Fetch main listing data with features and images
         const { data, error } = await supabase
           .from('listings')
-          .select('*')
+          .select(`
+            *,
+            listing_features (*),
+            listing_images (*)
+          `)
           .eq('id', id)
           .single();
 
         if (error) throw error;
-        if (data) setListing(data);
 
+        // Format the listing data
+        const formattedListing = {
+          ...data,
+          price: Number(data.price) || 0,
+          tax_amount: Number(data.tax_amount) || 0,
+          maintenance_fee: Number(data.maintenance_fee) || 0,
+          square_feet_living: Number(data.square_feet_living) || 0,
+          square_feet_total: Number(data.square_feet_total) || 0,
+          lot_size_sf: Number(data.lot_size_sf) || 0,
+          bedrooms: Number(data.bedrooms) || 0,
+          bathrooms_full: Number(data.bathrooms_full) || 0,
+          bathrooms_half: Number(data.bathrooms_half) || 0,
+          garage_spaces: Number(data.garage_spaces) || 0,
+          carport_spaces: Number(data.carport_spaces) || 0,
+          images: data.listing_images?.map(img => img.url) || []
+        };
+
+        setListing(formattedListing);
       } catch (error) {
         console.error('Error fetching listing:', error);
         toast({
@@ -86,281 +158,135 @@ export default function ListingPage() {
     }
 
     fetchListing();
-  }, [id, user?.id]);
-
-  if (loading) {
-    return (
-      <div className="min-h-screen bg-gradient-to-b from-gray-50 to-gray-100">
-        <div className="container mx-auto px-4 py-8">
-          <div className="animate-pulse space-y-8">
-            <div className="h-[500px] bg-gray-200 rounded-xl" />
-            <div className="space-y-4">
-              <div className="h-8 bg-gray-200 rounded w-1/3" />
-              <div className="h-4 bg-gray-200 rounded w-1/4" />
-            </div>
-          </div>
-        </div>
-      </div>
-    );
-  }
-
-  if (!listing) {
-    return (
-      <div className="min-h-screen bg-gradient-to-b from-gray-50 to-gray-100">
-        <div className="container mx-auto px-4 py-8 text-center">
-          <h1 className="text-2xl font-bold">Listing not found</h1>
-          <p className="text-muted-foreground mt-2">
-            The listing you're looking for doesn't exist or has been removed.
-          </p>
-          <Button
-            onClick={() => router.push('/listings')}
-            className="mt-4"
-          >
-            Back to Listings
-          </Button>
-        </div>
-      </div>
-    );
-  }
-
-  // Format price for display
-  const formattedPrice = new Intl.NumberFormat('en-US', {
-    style: 'currency',
-    currency: 'USD',
-    minimumFractionDigits: 0,
-    maximumFractionDigits: 0,
-  }).format(Number(listing.price));
-
-  // Calculate days on market
-  const daysOnMarket = Math.floor(
-    (new Date().getTime() - new Date(listing.created_at).getTime()) / 
-    (1000 * 60 * 60 * 24)
-  );
+  }, [id]);
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-gray-50 to-gray-100">
-      <header className="bg-white shadow-sm">
-        <div className="container mx-auto px-4 py-4 flex justify-between items-center">
-          <Link href="/listings" className="text-black hover:text-primary flex items-center">
-            <ChevronLeft className="w-4 h-4 mr-1" />
-            Back to Listings
-          </Link>
-          <Button variant="ghost" size="icon">
-            <Heart className="h-5 w-5" />
-          </Button>
-        </div>
-      </header>
-
-      <main className="container mx-auto px-4 py-8 space-y-8">
-        {/* Image Gallery */}
-        <div className="relative h-[500px] rounded-xl overflow-hidden shadow-lg">
-          {listing.images && listing.images.length > 0 ? (
-            <>
-              <Image
-                src={listing.images[currentImageIndex]}
-                alt={listing.title}
-                fill
-                className="object-cover"
-              />
-              {listing.images.length > 1 && (
-                <div className="absolute bottom-4 right-4 space-x-2">
-                  <Button 
-                    variant="secondary" 
-                    size="icon" 
-                    className="rounded-full bg-white/80 backdrop-blur-sm" 
-                    onClick={() => setCurrentImageIndex((prev) => 
-                      prev === 0 ? listing.images.length - 1 : prev - 1
-                    )}
-                  >
-                    <ChevronLeft className="h-4 w-4" />
-                  </Button>
-                  <Button 
-                    variant="secondary" 
-                    size="icon" 
-                    className="rounded-full bg-white/80 backdrop-blur-sm" 
-                    onClick={() => setCurrentImageIndex((prev) => 
-                      (prev + 1) % listing.images.length
-                    )}
-                  >
-                    <ChevronRight className="h-4 w-4" />
-                  </Button>
-                </div>
-              )}
-            </>
-          ) : (
-            <div className="absolute inset-0 flex items-center justify-center bg-gray-100">
-              <ImageIcon className="h-12 w-12 text-gray-400" />
-            </div>
-          )}
-        </div>
-
-        {/* Main Content */}
-        <div className="space-y-8">
-          {/* Title and Price */}
-          <div>
-            <h1 className="text-3xl font-bold mb-2 text-black">{listing.title}</h1>
-            <p className="text-black flex items-center mb-4">
-              <MapPin className="w-4 h-4 mr-2 text-black" />
-              {listing.address_street}
-              {listing.address_unit && `, Unit ${listing.address_unit}`},
-              {' '}{listing.city}, {listing.state} {listing.zip_code}
-            </p>
-            <div className="flex flex-wrap gap-4 items-center">
-              <Badge variant="secondary" className="text-lg px-3 py-1 text-black">
-                <DollarSign className="w-4 h-4 inline mr-1 text-black" />
-                {formattedPrice}
-              </Badge>
-              {listing.bedrooms && (
-                <div className="flex items-center text-black">
-                  <Bed className="w-5 h-5 mr-2 text-black" />
-                  <span>{listing.bedrooms} Beds</span>
-                </div>
-              )}
-              {listing.bathrooms_full && (
-                <div className="flex items-center text-black">
-                  <Bath className="w-5 h-5 mr-2 text-black" />
-                  <span>{listing.bathrooms_full} Baths</span>
-                </div>
-              )}
-              {listing.square_feet_living && (
-                <div className="flex items-center text-black">
-                  <Square className="w-5 h-5 mr-2 text-black" />
-                  <span>{Number(listing.square_feet_living).toLocaleString()} sqft</span>
-                </div>
-              )}
+    <Layout>
+      <div className="container max-w-7xl mx-auto p-6">
+        {loading ? (
+          <div className="animate-pulse space-y-8">
+            <div className="h-[400px] bg-muted rounded-lg" />
+            <div className="space-y-4">
+              <div className="h-8 bg-muted rounded w-1/3" />
+              <div className="h-4 bg-muted rounded w-1/4" />
             </div>
           </div>
-
-          {/* Commission Card */}
-          <Card className="bg-gradient-to-br from-blue-50 to-blue-100 border-blue-200">
-            <CardHeader>
-              <CardTitle className="text-blue-800 flex items-center">
-                Commission Information
-                <Info className="w-4 h-4 ml-2 text-blue-500" />
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-4 text-blue-700">
-                <div className="flex justify-between items-center">
-                  <span>Commission Rate:</span>
-                  <Badge variant="secondary" className="bg-blue-200 text-blue-800">
-                    <span className="blur-sm">x.xx%</span>
-                  </Badge>
-                </div>
-                <div className="flex justify-between items-center">
-                  <span>Potential Commission:</span>
-                  <span className="font-bold blur-sm">$xx,xxx</span>
-                </div>
+        ) : !listing ? (
+          <div className="text-center py-12">
+            <h1 className="text-2xl font-bold">Listing not found</h1>
+            <Button
+              onClick={() => router.push('/listings')}
+              variant="outline"
+              className="mt-4"
+            >
+              Back to Listings
+            </Button>
+          </div>
+        ) : (
+          <div className="space-y-8">
+            {/* Header */}
+            <div className="flex justify-between items-start">
+              <div>
+                <h1 className="text-3xl font-bold">{listing.title}</h1>
+                <p className="text-muted-foreground flex items-center mt-1">
+                  <MapPin className="h-4 w-4 mr-1" />
+                  {listing.address}, {listing.city}, {listing.state} {listing.zip_code}
+                </p>
               </div>
-              <Dialog>
-                <DialogTrigger asChild>
-                  <Button 
-                    className="w-full bg-blue-600 hover:bg-blue-700 text-white mt-4"
-                    onClick={() => setShowCommissionButton(true)}
-                  >
-                    <Percent className="w-4 h-4 mr-2" />
-                    View Commission Details
-                  </Button>
-                </DialogTrigger>
-                <DialogContent>
-                  <DialogHeader>
-                    <DialogTitle>Commission Information</DialogTitle>
-                    <DialogDescription>
-                      Detailed commission information for this listing is available.
-                    </DialogDescription>
-                  </DialogHeader>
-                  {showCommissionButton && (
-                    <Button className="w-full mt-4" onClick={() => router.push('/commission-info')}>
-                      Access Full Commission Data
-                    </Button>
-                  )}
-                </DialogContent>
-              </Dialog>
-            </CardContent>
-          </Card>
+              <div className="text-right">
+                <div className="text-3xl font-bold">
+                  ${Number(listing.price).toLocaleString()}
+                </div>
+                <Badge variant="outline" className="mt-1">
+                  {listing.status.toUpperCase()}
+                </Badge>
+              </div>
+            </div>
 
-          {/* Tabs */}
-          <Tabs defaultValue="description" className="w-full">
-            <TabsList className="grid w-full grid-cols-3">
-              <TabsTrigger value="description" className="text-black">Description</TabsTrigger>
-              <TabsTrigger value="features" className="text-black">Features</TabsTrigger>
-              <TabsTrigger value="location" className="text-black">Location</TabsTrigger>
-            </TabsList>
-            <TabsContent value="description" className="mt-4">
+            {/* Images */}
+            <div className="relative aspect-[16/9] rounded-lg overflow-hidden bg-muted">
+              {listing.images && listing.images.length > 0 ? (
+                <Image
+                  src={listing.images[0]}
+                  alt={listing.title}
+                  fill
+                  sizes="(max-width: 1200px) 100vw, 1200px"
+                  className="object-cover"
+                  priority
+                />
+              ) : (
+                <div className="absolute inset-0 flex items-center justify-center">
+                  <ImageIcon className="h-16 w-16 text-muted-foreground" />
+                </div>
+              )}
+            </div>
+
+            {/* Details */}
+            <div className="grid gap-8 md:grid-cols-3">
+              <div className="md:col-span-2 space-y-6">
+                <Card>
+                  <CardHeader>
+                    <CardTitle>Property Details</CardTitle>
+                  </CardHeader>
+                  <CardContent className="grid gap-4 sm:grid-cols-2">
+                    <div className="flex items-center">
+                      <Home className="h-4 w-4 mr-2" />
+                      <span>{listing.property_type.replace('_', ' ').toUpperCase()}</span>
+                    </div>
+                    <div className="flex items-center">
+                      <Bed className="h-4 w-4 mr-2" />
+                      <span>{listing.bedrooms} Bedrooms</span>
+                    </div>
+                    <div className="flex items-center">
+                      <Bath className="h-4 w-4 mr-2" />
+                      <span>{listing.bathrooms_full} Full Baths</span>
+                    </div>
+                    <div className="flex items-center">
+                      <Square className="h-4 w-4 mr-2" />
+                      <span>{listing.square_feet_living.toLocaleString()} Sq Ft</span>
+                    </div>
+                  </CardContent>
+                </Card>
+
+                {/* Description */}
+                <Card>
+                  <CardHeader>
+                    <CardTitle>Description</CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <p className="whitespace-pre-wrap">{listing.description}</p>
+                  </CardContent>
+                </Card>
+              </div>
+
+              {/* Agent Info */}
               <Card>
-                <CardContent className="pt-6">
-                  <p className="text-black">{listing.description}</p>
-                </CardContent>
-              </Card>
-            </TabsContent>
-            <TabsContent value="features" className="mt-4">
-              <Card>
-                <CardContent className="pt-6">
-                  <div className="grid gap-6">
-                    {listing.features?.interior?.length > 0 && (
-                      <div>
-                        <h3 className="font-semibold mb-2 text-black">Interior Features</h3>
-                        <ul className="list-disc pl-5 text-black">
-                          {listing.features.interior.map((feature) => (
-                            <li key={feature}>{feature}</li>
-                          ))}
-                        </ul>
-                      </div>
-                    )}
-                    {listing.features?.exterior?.length > 0 && (
-                      <div>
-                        <h3 className="font-semibold mb-2 text-black">Exterior Features</h3>
-                        <ul className="list-disc pl-5 text-black">
-                          {listing.features.exterior.map((feature) => (
-                            <li key={feature}>{feature}</li>
-                          ))}
-                        </ul>
-                      </div>
-                    )}
+                <CardHeader>
+                  <CardTitle>Listing Agent</CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <div>
+                    <div className="font-medium">{listing.listing_agent_name}</div>
+                    <div className="text-sm text-muted-foreground">{listing.listing_office}</div>
+                  </div>
+                  <div className="flex items-center">
+                    <Phone className="h-4 w-4 mr-2" />
+                    <a href={`tel:${listing.listing_agent_phone}`} className="text-primary">
+                      {listing.listing_agent_phone}
+                    </a>
+                  </div>
+                  <div className="flex items-center">
+                    <Mail className="h-4 w-4 mr-2" />
+                    <a href={`mailto:${listing.listing_agent_email}`} className="text-primary">
+                      {listing.listing_agent_email}
+                    </a>
                   </div>
                 </CardContent>
               </Card>
-            </TabsContent>
-            <TabsContent value="location" className="mt-4">
-              <Card>
-                <CardContent className="pt-6">
-                  <p className="text-black">
-                    Located in {listing.city}, {listing.state}. {listing.county} County.
-                  </p>
-                </CardContent>
-              </Card>
-            </TabsContent>
-          </Tabs>
-
-          {/* Contact Form */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="text-black">Contact Listing Agent</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <form className="space-y-4">
-                <div>
-                  <label htmlFor="name" className="block text-sm font-medium text-black mb-1">Name</label>
-                  <input id="name" className="w-full p-2 border rounded-md text-black" type="text" required />
-                </div>
-                <div>
-                  <label htmlFor="email" className="block text-sm font-medium text-black mb-1">Email</label>
-                  <input id="email" className="w-full p-2 border rounded-md text-black" type="email" required />
-                </div>
-                <div>
-                  <label htmlFor="phone" className="block text-sm font-medium text-black mb-1">Phone</label>
-                  <input id="phone" className="w-full p-2 border rounded-md text-black" type="tel" />
-                </div>
-                <div>
-                  <label htmlFor="message" className="block text-sm font-medium text-black mb-1">Message</label>
-                  <textarea id="message" className="w-full p-2 border rounded-md text-black" rows={4} required></textarea>
-                </div>
-                <Button className="w-full">Send Message</Button>
-              </form>
-            </CardContent>
-          </Card>
-        </div>
-      </main>
-    </div>
+            </div>
+          </div>
+        )}
+      </div>
+    </Layout>
   );
 }

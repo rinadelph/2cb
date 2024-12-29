@@ -1,136 +1,229 @@
-import { useRouter } from 'next/router';
-import { useEffect, useState } from 'react';
+"use client";
+
+import { useState, useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { listingSchema } from '../../../lib/validation/listingSchema';
-import { getListing, updateListing } from '../../../lib/api/listings';
-import { useAuth } from '../../../hooks/useAuth';
-import { Input, Textarea, Select, Button, Checkbox } from '../../../components/ui';
-import { ListingFormData } from '../../../types/listing';
+import { listingSchema, type ListingFormValues } from '@/lib/schemas/listing-schema';
+import { getListing, updateListing } from '@/lib/services/listings';
+import { useAuth } from '@/lib/auth/auth-context';
+import { useRouter } from 'next/router';
+import { Layout } from '@/components/Layout';
+import {
+  Form,
+  FormControl,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from "@/components/ui/form";
+import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
+import { Textarea } from "@/components/ui/textarea";
+import { useToast } from "@/components/ui/use-toast";
+import { Loader2 } from "lucide-react";
 
-const EditListingPage = () => {
+export default function EditListingPage() {
   const router = useRouter();
   const { id } = router.query;
-  const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
   const { user } = useAuth();
+  const { toast } = useToast();
+  const [isLoading, setIsLoading] = useState(false);
 
-  const { register, handleSubmit, formState: { errors }, reset } = useForm<ListingFormData>({
+  const form = useForm<ListingFormValues>({
     resolver: zodResolver(listingSchema),
+    defaultValues: async () => {
+      if (typeof id !== 'string') return getDefaultValues();
+
+      try {
+        const result = await getListing(id);
+        if (result.error || !result.listing) {
+          toast({
+            title: "Error",
+            description: "Listing not found",
+            variant: "destructive",
+          });
+          router.push('/listings');
+          return getDefaultValues();
+        }
+        return result.listing;
+      } catch (error) {
+        console.error('Failed to fetch listing:', error);
+        toast({
+          title: "Error",
+          description: "Failed to fetch listing",
+          variant: "destructive",
+        });
+        return getDefaultValues();
+      }
+    }
   });
 
+  const getDefaultValues = (): ListingFormValues => ({
+    title: '',
+    description: '',
+    mls_number: '',
+    status: 'draft',
+    address: '',
+    address_unit: '',
+    city: '',
+    state: '',
+    zip_code: '',
+    county: '',
+    folio_number: '',
+    parcel_number: '',
+    legal_description: '',
+    property_type: 'single_family',
+    year_built: '',
+    bedrooms: 0,
+    bathrooms_full: 0,
+    bathrooms_half: 0,
+    square_feet_living: 0,
+    square_feet_total: 0,
+    lot_size_sf: 0,
+    garage_spaces: 0,
+    carport_spaces: 0,
+    furnished: false,
+    pool: false,
+    waterfront: false,
+    water_access: false,
+    price: 0,
+    tax_amount: 0,
+    tax_year: '',
+    maintenance_fee: 0,
+    special_assessment: false,
+    virtual_tour_url: '',
+    broker_remarks: '',
+    showing_instructions: '',
+    construction_type: [],
+    interior_features: [],
+    exterior_features: [],
+    parking_description: [],
+    lot_description: [],
+    images: [],
+    listing_office: '',
+    listing_agent_name: '',
+    listing_agent_phone: '',
+    listing_agent_email: '',
+    listing_agent_license: ''
+  });
+
+  // Redirect to login if not authenticated
   useEffect(() => {
-    if (id && typeof id === 'string') {
-      fetchListing(id);
-    } else {
-      console.error('Invalid or missing listing ID');
-      setError('Invalid listing ID');
-      setIsLoading(false);
+    if (!user) {
+      toast({
+        title: "Authentication Required",
+        description: "Please sign in to edit listings",
+        variant: "destructive",
+      });
+      router.push('/login');
     }
-  }, [id]);
+  }, [user, router, toast]);
 
-  const fetchListing = async (listingId: string) => {
+  const handleSubmit = async (data: ListingFormValues) => {
     try {
-      const data = await getListing(listingId);
-      if (data) {
-        reset(data);
-        setIsLoading(false);
-      } else {
-        throw new Error('Listing not found');
+      setIsLoading(true);
+      if (typeof id !== 'string') {
+        throw new Error('Invalid listing ID');
       }
-    } catch (err) {
-      console.error('Error fetching listing:', err);
-      setError('Failed to fetch listing');
+
+      if (!user?.id) {
+        throw new Error('User ID is required');
+      }
+
+      const { error } = await updateListing(id, data, user.id);
+      if (error) throw error;
+
+      toast({
+        title: "Success",
+        description: "Listing updated successfully",
+      });
+      router.push('/listings');
+    } catch (error) {
+      console.error('Failed to update listing:', error);
+      toast({
+        title: "Error",
+        description: "Failed to update listing",
+        variant: "destructive",
+      });
+    } finally {
       setIsLoading(false);
     }
   };
 
-  const onSubmit = async (data: ListingFormData) => {
-    if (!user || !id || typeof id !== 'string') {
-      setError('User not authenticated or invalid listing ID');
-      return;
-    }
-
-    try {
-      await updateListing(id, data, user.id);
-      router.push(`/listings/${id}`);
-    } catch (err) {
-      console.error('Error updating listing:', err);
-      setError('Failed to update listing');
-    }
-  };
-
-  if (isLoading) return <div className="text-center py-10">Loading...</div>;
-  if (error) return <div className="text-center py-10 text-red-600">{error}</div>;
+  // Show loading state while checking auth
+  if (!user) {
+    return (
+      <Layout>
+        <div className="container max-w-2xl mx-auto p-6">
+          <div className="flex items-center justify-center min-h-[400px]">
+            <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+          </div>
+        </div>
+      </Layout>
+    );
+  }
 
   return (
-    <div className="max-w-2xl mx-auto py-8">
-      <h1 className="text-3xl font-bold mb-6">Edit Listing</h1>
-      <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
-        <div>
-          <label htmlFor="title" className="block text-sm font-medium text-gray-700">Title</label>
-          <Input id="title" {...register('title')} error={errors.title?.message} />
-        </div>
-
-        <div>
-          <label htmlFor="description" className="block text-sm font-medium text-gray-700">Description</label>
-          <Textarea id="description" {...register('description')} error={errors.description?.message} />
-        </div>
-
-        <div>
-          <label htmlFor="price" className="block text-sm font-medium text-gray-700">Price</label>
-          <Input id="price" type="number" {...register('price', { valueAsNumber: true })} error={errors.price?.message} />
-        </div>
-
-        <div>
-          <label htmlFor="bedrooms" className="block text-sm font-medium text-gray-700">Bedrooms</label>
-          <Input id="bedrooms" type="number" {...register('bedrooms', { valueAsNumber: true })} error={errors.bedrooms?.message} />
-        </div>
-
-        <div>
-          <label htmlFor="bathrooms" className="block text-sm font-medium text-gray-700">Bathrooms</label>
-          <Input id="bathrooms" type="number" step="0.1" {...register('bathrooms', { valueAsNumber: true })} error={errors.bathrooms?.message} />
-        </div>
-
-        <div>
-          <label htmlFor="square_footage" className="block text-sm font-medium text-gray-700">Square Footage</label>
-          <Input id="square_footage" type="number" {...register('square_footage', { valueAsNumber: true })} error={errors.square_footage?.message} />
-        </div>
-
-        <div>
-          <label htmlFor="year_built" className="block text-sm font-medium text-gray-700">Year Built</label>
-          <Input id="year_built" type="number" {...register('year_built', { valueAsNumber: true })} error={errors.year_built?.message} />
-        </div>
-
-        <div>
-          <label htmlFor="property_type" className="block text-sm font-medium text-gray-700">Property Type</label>
-          <Select 
-            id="property_type" 
-            {...register('property_type')} 
-            options={[
-              { value: 'house', label: 'House' },
-              { value: 'apartment', label: 'Apartment' },
-              { value: 'condo', label: 'Condo' },
-              { value: 'townhouse', label: 'Townhouse' },
-            ]}
-            error={errors.property_type?.message}
-          />
-        </div>
-
-        <div>
-          <Checkbox id="for_sale" {...register('for_sale')} label="For Sale" />
-        </div>
-
-        <div>
-          <Checkbox id="for_rent" {...register('for_rent')} label="For Rent" />
-        </div>
-
-        <Button type="submit" className="w-full">
-          Update Listing
-        </Button>
-      </form>
-    </div>
+    <Layout>
+      <div className="container max-w-2xl py-6">
+        <h1 className="text-3xl font-bold mb-6">Edit Listing</h1>
+        <Form {...form}>
+          <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-8">
+            <FormField
+              control={form.control}
+              name="title"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Title</FormLabel>
+                  <FormControl>
+                    <Input 
+                      {...field} 
+                      placeholder="Enter listing title"
+                      className="bg-gray-800 border-gray-700 text-white placeholder:text-gray-400"
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            <FormField
+              control={form.control}
+              name="description"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Description</FormLabel>
+                  <FormControl>
+                    <Textarea 
+                      {...field} 
+                      placeholder="Enter listing description"
+                      className="min-h-[100px] bg-gray-800 border-gray-700 text-white placeholder:text-gray-400"
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            <div className="flex justify-end gap-4">
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => router.back()}
+                className="bg-gray-700 hover:bg-gray-600 text-white"
+              >
+                Cancel
+              </Button>
+              <Button 
+                type="submit" 
+                disabled={isLoading}
+                className="bg-primary hover:bg-primary/90"
+              >
+                {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                Save Changes
+              </Button>
+            </div>
+          </form>
+        </Form>
+      </div>
+    </Layout>
   );
-};
-
-export default EditListingPage;
+}

@@ -36,7 +36,7 @@ export default function ListingsPage() {
         setLoading(true);
         
         // Get test listings first
-        const testListings = getTestListings(user.id);
+        const testListings = await getTestListings(user.id);
         console.log('Test listings:', testListings);
 
         // Get database listings
@@ -49,10 +49,15 @@ export default function ListingsPage() {
         if (error) throw error;
         console.log('DB listings:', dbListings);
 
-        // Combine and sort all listings
-        const allListings = [...testListings, ...(dbListings || [])].sort(
-          (a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
-        );
+        // Make sure we don't have duplicate IDs when combining listings
+        const seenIds = new Set();
+        const allListings = [...testListings, ...(dbListings || [])].filter(listing => {
+          if (seenIds.has(listing.id)) {
+            return false;
+          }
+          seenIds.add(listing.id);
+          return true;
+        }).sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
 
         console.log('All listings:', allListings);
         setListings(allListings);
@@ -108,6 +113,7 @@ export default function ListingsPage() {
                       src={listing.images[0]}
                       alt={listing.title}
                       fill
+                      sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
                       className="object-cover"
                     />
                   ) : (

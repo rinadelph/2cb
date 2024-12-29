@@ -13,7 +13,7 @@ import { Card, CardContent, CardFooter, CardHeader } from '@/components/ui/card'
 import { Loader2 } from 'lucide-react'
 
 export function LoginForm() {
-  const { signInWithEmail } = useAuth()
+  const { signIn } = useAuth()
   const { toast } = useToast()
   const [isLoading, setIsLoading] = useState<boolean>(false)
   const [formError, setFormError] = useState<string | null>(null)
@@ -43,7 +43,7 @@ export function LoginForm() {
         rememberMe 
       })
 
-      const { error } = await signInWithEmail(email, password, { rememberMe })
+      const { error } = await signIn(email, password)
 
       if (error) {
         logger.error('Login failed', { 

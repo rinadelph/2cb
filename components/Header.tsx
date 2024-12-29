@@ -1,16 +1,20 @@
 import React from 'react';
 import Link from 'next/link';
-import { useAuth } from '../hooks/useAuth';
+import { useAuth } from '@/lib/auth/auth-context';
 
-export default function Header() {
+export function Header() {
+  const { user, signOut } = useAuth();
+  
   return (
-    <header className="border-b">
-      <div className="container mx-auto px-4 py-4">
-        <nav className="flex items-center justify-between">
-          <div className="text-xl font-bold">2Click Broker</div>
-          {/* Add navigation items here */}
-        </nav>
-      </div>
+    <header>
+      {user ? (
+        <>
+          <span>{user.email}</span>
+          <button onClick={signOut}>Sign Out</button>
+        </>
+      ) : (
+        <Link href="/login">Sign In</Link>
+      )}
     </header>
   );
 }
