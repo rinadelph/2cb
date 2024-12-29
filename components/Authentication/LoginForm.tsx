@@ -20,17 +20,22 @@ export function LoginForm() {
   const [isLoading, setIsLoading] = useState<boolean>(false)
   const [formError, setFormError] = useState<string | null>(null)
   const [rememberMe, setRememberMe] = useState<boolean>(() => {
-    // Check if there was a previous remember me preference
     try {
-      return localStorage.getItem('rememberMe') === 'true'
-    } catch {
+      const remembered = localStorage.getItem('rememberMe') === 'true'
+      logger.info('Loaded remember me preference:', { remembered })
+      return remembered
+    } catch (err) {
+      logger.error('Failed to load remember me preference:', err)
       return false
     }
   })
 
   const onSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault()
-    if (isLoading) return
+    if (isLoading) {
+      logger.info('Submit blocked - already loading')
+      return
+    }
 
     setIsLoading(true)
     setFormError(null)
@@ -40,16 +45,18 @@ export function LoginForm() {
       const email = formData.get('email') as string
       const password = formData.get('password') as string
 
-      logger.info('Login attempt initiated', { 
+      logger.info('Login form submitted', { 
         email,
-        rememberMe 
+        rememberMe,
+        path: window.location.pathname
       })
 
       const { error } = await signIn(email, password)
 
       if (error) {
-        logger.error('Login failed', { 
-          error: error.message
+        logger.error('Login form error:', { 
+          error: error.message,
+          path: window.location.pathname
         })
         setFormError(error.message)
         toast({
@@ -58,19 +65,22 @@ export function LoginForm() {
           description: error.message || "Invalid login credentials",
         })
       } else {
-        // Save remember me preference
+        logger.info('Login successful, saving preferences', {
+          email,
+          path: window.location.pathname
+        })
+        
         try {
           localStorage.setItem('rememberMe', rememberMe.toString())
+          logger.info('Remember me preference saved')
         } catch (err) {
-          console.error('Failed to save remember me preference:', err)
+          logger.error('Failed to save remember me preference:', err)
         }
 
         toast({
           title: "Success",
           description: "Successfully signed in",
         })
-
-        // Let the auth context handle the redirection
       }
     } catch (err) {
       logger.error('Unexpected error in login form:', err)

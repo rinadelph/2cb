@@ -4,6 +4,7 @@ import { useRouter } from 'next/router'
 import { Session, User, AuthChangeEvent } from '@supabase/supabase-js'
 import { debounce } from 'lodash'
 import { authLogger } from '@/lib/auth/auth-logger'
+import { logger } from '@/lib/debug'
 
 interface AuthContextType {
   user: User | null
@@ -30,7 +31,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     const initializeAuth = async () => {
       try {
+        logger.info('Initializing auth context')
         const { data: { session: initialSession } } = await supabase.auth.getSession()
+        logger.info('Initial session loaded:', { 
+          hasSession: !!initialSession,
+          user: initialSession?.user?.email 
+        })
         setSession(initialSession)
         setUser(initialSession?.user ?? null)
         
@@ -39,23 +45,25 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           event: AuthChangeEvent, 
           session: Session | null
         ) => {
-          authLogger.info('Supabase auth state changed:', { 
+          logger.info('Auth state change detected:', { 
             event, 
-            user: session?.user?.email 
-          });
-          setUser(session?.user || null);
-          setSession(session);
-          setLoading(false);
-        }, 300);
+            user: session?.user?.email,
+            path: window.location.pathname
+          })
+          setUser(session?.user || null)
+          setSession(session)
+          setLoading(false)
+        }, 300)
 
-        const { data: { subscription } } = supabase.auth.onAuthStateChange(handleAuthChange);
+        const { data: { subscription } } = supabase.auth.onAuthStateChange(handleAuthChange)
 
         setLoading(false)
         return () => {
+          logger.info('Cleaning up auth subscriptions')
           subscription.unsubscribe()
         }
       } catch (error) {
-        console.error('Error initializing auth:', error)
+        logger.error('Error initializing auth:', error)
         setLoading(false)
       }
     }
@@ -65,52 +73,70 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   // Handle auth state changes and navigation
   useEffect(() => {
+    logger.info('Auth state changed:', { 
+      hasUser: !!user, 
+      loading,
+      path: window.location.pathname
+    })
+
     if (!loading) {
-      if (!user) {
-        // Only redirect to login if we're not already on an auth page
-        const isAuthPage = window.location.pathname.startsWith('/login') || 
-                          window.location.pathname.startsWith('/signup')
-        if (!isAuthPage) {
-          router.push('/login')
-        }
-      } else {
-        // Only redirect to dashboard if we're on an auth page
-        const isAuthPage = window.location.pathname.startsWith('/login') || 
-                          window.location.pathname.startsWith('/signup')
-        if (isAuthPage) {
-          router.push('/dashboard')
-        }
+      const currentPath = window.location.pathname
+      const isAuthPage = currentPath.startsWith('/login') || 
+                        currentPath.startsWith('/signup') ||
+                        currentPath.startsWith('/auth/')
+
+      logger.info('Checking navigation:', {
+        currentPath,
+        isAuthPage,
+        hasUser: !!user
+      })
+
+      if (!user && !isAuthPage) {
+        logger.info('Redirecting to login - no user')
+        router.push('/login')
+      } else if (user && isAuthPage) {
+        logger.info('Redirecting to dashboard - user authenticated')
+        router.push('/dashboard')
       }
     }
   }, [user, loading, router])
 
   const signIn = async (email: string, password: string) => {
     try {
+      logger.info('Sign in attempt:', { email })
       const { data, error } = await supabase.auth.signInWithPassword({
         email,
         password,
       })
       
       if (error) {
+        logger.error('Sign in failed:', error)
         return { error }
       }
 
+      logger.info('Sign in successful:', { 
+        user: data.user?.email,
+        path: window.location.pathname
+      })
       setUser(data.user)
       setSession(data.session)
       return { error: null }
     } catch (error) {
+      logger.error('Unexpected error during sign in:', error)
       return { error: error as Error }
     }
   }
 
   const signOut = async () => {
     try {
+      logger.info('Sign out initiated')
       await supabase.auth.signOut()
       setUser(null)
       setSession(null)
       router.push('/login')
+      logger.info('Sign out successful')
     } catch (error) {
-      console.error('Error signing out:', error)
+      logger.error('Error signing out:', error)
     }
   }
 
