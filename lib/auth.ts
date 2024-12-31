@@ -1,5 +1,4 @@
 import { supabase } from './supabaseClient'
-import type { User } from '@supabase/supabase-js'
 
 export const AUTH_ROUTES = {
   login: '/auth/login',

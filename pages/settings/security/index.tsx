@@ -9,7 +9,6 @@ import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { useToast } from "@/components/ui/use-toast";
 import { useState } from "react";
 import { Loader2, AlertTriangle, Shield, Key, Smartphone } from "lucide-react";
-import { Separator } from "@/components/ui/separator";
 
 export default function SecuritySettings() {
   const { toast } = useToast();
@@ -25,7 +24,8 @@ export default function SecuritySettings() {
         title: "Security settings updated",
         description: "Your security preferences have been saved.",
       });
-    } catch (error) {
+    } catch (err) {
+      console.error('Failed to update security settings:', err);
       toast({
         title: "Error",
         description: "Failed to update security settings.",

@@ -1,8 +1,7 @@
 import { createContext, useContext, useEffect, useState, useRef, useCallback } from 'react'
 import { supabase } from '@/lib/supabase-client'
 import { useRouter } from 'next/router'
-import { Session, User, AuthChangeEvent } from '@supabase/supabase-js'
-import { debounce } from 'lodash'
+import { Session, User } from '@supabase/supabase-js'
 import { logger } from '@/lib/debug'
 import { AUTH_ROUTES } from '@/lib/auth'
 
@@ -11,6 +10,7 @@ interface AuthContextType {
   session: Session | null
   signOut: () => Promise<void>
   signIn: (email: string, password: string) => Promise<{ error: Error | null }>
+  signUp: (email: string, password: string) => Promise<{ error: Error | null }>
   loading: boolean
 }
 
@@ -19,6 +19,7 @@ const AuthContext = createContext<AuthContextType>({
   session: null,
   signOut: async () => {},
   signIn: async () => ({ error: null }),
+  signUp: async () => ({ error: null }),
   loading: true,
 })
 
@@ -110,8 +111,23 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   }
 
+  const signUp = async (email: string, password: string) => {
+    try {
+      const { data, error } = await supabase.auth.signUp({
+        email,
+        password,
+      })
+      
+      if (error) return { error }
+
+      return { error: null }
+    } catch (error) {
+      return { error: error as Error }
+    }
+  }
+
   return (
-    <AuthContext.Provider value={{ user, session, signOut, signIn, loading }}>
+    <AuthContext.Provider value={{ user, session, signOut, signIn, signUp, loading }}>
       {children}
     </AuthContext.Provider>
   )
