@@ -116,10 +116,10 @@ export default function SecuritySettings() {
                     <Shield className="h-4 w-4" />
                     <AlertTitle>Next steps</AlertTitle>
                     <AlertDescription>
-                      To complete 2FA setup, you'll need to:
+                      To complete 2FA setup, you&apos;ll need to:
                       <ol className="list-decimal ml-4 mt-2 space-y-1">
                         <li>Download an authenticator app</li>
-                        <li>Scan the QR code we'll provide</li>
+                        <li>Scan the QR code we&apos;ll provide</li>
                         <li>Enter the verification code</li>
                       </ol>
                     </AlertDescription>

@@ -25,7 +25,7 @@ export default function VerifyEmail() {
                 Check your email
               </h1>
               <p className="text-base text-foreground/60">
-                We've sent you a verification link to your email address.
+                We&apos;ve sent you a verification link to your email address.
               </p>
             </div>
             <div className="pt-4 space-y-4">
@@ -38,7 +38,7 @@ export default function VerifyEmail() {
                 Back to Login
               </Button>
               <p className="text-sm text-muted-foreground">
-                Didn't receive the email? Check your spam folder or{' '}
+                Didn&apos;t receive the email? Check your spam folder or{' '}
                 <button 
                   onClick={() => router.reload()}
                   className="text-primary hover:text-primary/80 transition-colors font-medium"

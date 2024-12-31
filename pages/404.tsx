@@ -20,7 +20,7 @@ export default function NotFound() {
             404 - Page Not Found
           </h1>
           <p className="text-muted-foreground max-w-[600px] text-lg">
-            Oops! The page you're looking for doesn't exist or you don't have permission to view it.
+            Oops! The page you&apos;re looking for doesn&apos;t exist or you don&apos;t have permission to view it.
             Please sign in or return to the homepage.
           </p>
         </motion.div>
