@@ -1,5 +1,6 @@
 import { User } from '@supabase/supabase-js'
 import { useAuth } from '@/hooks/useAuth'
+import { AUTH_ROUTES } from '@/lib/auth'
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -34,10 +35,10 @@ export function UserMenu({ user }: UserMenuProps) {
         </DropdownMenuLabel>
         <DropdownMenuSeparator />
         <DropdownMenuItem asChild>
-          <Link href="/dashboard">Dashboard</Link>
+          <Link href={AUTH_ROUTES.dashboard}>Dashboard</Link>
         </DropdownMenuItem>
         <DropdownMenuItem asChild>
-          <Link href="/settings">Settings</Link>
+          <Link href={AUTH_ROUTES.settings}>Settings</Link>
         </DropdownMenuItem>
         <DropdownMenuSeparator />
         <DropdownMenuItem

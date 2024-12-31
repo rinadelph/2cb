@@ -3,6 +3,7 @@ import { motion } from 'framer-motion';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { AlertCircle, ArrowLeft } from 'lucide-react';
+import { AUTH_ROUTES } from '@/constants/auth';
 
 export default function AuthError() {
   const router = useRouter();
@@ -52,7 +53,7 @@ export default function AuthError() {
             <div className="pt-4 space-y-3">
               <Button
                 className="w-full"
-                onClick={() => router.push('/auth/login')}
+                onClick={() => router.push(AUTH_ROUTES.login)}
                 size="lg"
               >
                 Return to Login
@@ -61,7 +62,7 @@ export default function AuthError() {
                 <Button
                   variant="outline"
                   className="w-full"
-                  onClick={() => router.push('/reset-password')}
+                  onClick={() => router.push(AUTH_ROUTES.resetPassword)}
                   size="lg"
                 >
                   <ArrowLeft className="mr-2 h-4 w-4" />

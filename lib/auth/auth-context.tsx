@@ -4,6 +4,7 @@ import { useRouter } from 'next/router'
 import { Session, User, AuthChangeEvent } from '@supabase/supabase-js'
 import { debounce } from 'lodash'
 import { logger } from '@/lib/debug'
+import { AUTH_ROUTES } from '@/lib/auth'
 
 interface AuthContextType {
   user: User | null
@@ -70,14 +71,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     if (loading || navigationInProgress.current) return
 
-    const isAuthPage = router.pathname.startsWith('/login') || 
-                      router.pathname.startsWith('/signup') ||
-                      router.pathname.startsWith('/auth/')
+    const isAuthPage = router.pathname.startsWith(AUTH_ROUTES.login) || 
+                      router.pathname.startsWith(AUTH_ROUTES.register)
 
     if (!user && !isAuthPage) {
-      navigate('/login')
+      navigate(AUTH_ROUTES.login)
     } else if (user && isAuthPage) {
-      navigate('/dashboard')
+      navigate(AUTH_ROUTES.dashboard)
     }
   }, [user, loading, router.pathname, navigate])
 
@@ -90,6 +90,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       
       if (error) return { error }
 
+      setUser(data.user)
+      setSession(data.session)
+
       return { error: null }
     } catch (error) {
       return { error: error as Error }
@@ -101,7 +104,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       await supabase.auth.signOut()
       setUser(null)
       setSession(null)
-      navigate('/login')
+      navigate(AUTH_ROUTES.login)
     } catch (error) {
       logger.error('Error signing out:', error)
     }

@@ -12,6 +12,7 @@ import Link from 'next/link'
 import { Card, CardContent, CardFooter, CardHeader } from '@/components/ui/card'
 import { Loader2 } from 'lucide-react'
 import { useRouter } from 'next/router'
+import { AUTH_ROUTES } from '@/lib/auth'
 
 export function LoginForm() {
   const { signIn } = useAuth()
@@ -47,16 +48,14 @@ export function LoginForm() {
 
       logger.info('Login form submitted', { 
         email,
-        rememberMe,
-        path: window.location.pathname
+        rememberMe
       })
 
       const { error } = await signIn(email, password)
 
       if (error) {
         logger.error('Login form error:', { 
-          error: error.message,
-          path: window.location.pathname
+          error: error.message
         })
         setFormError(error.message)
         toast({
@@ -65,18 +64,12 @@ export function LoginForm() {
           description: error.message || "Invalid login credentials",
         })
       } else {
-        logger.info('Login successful, saving preferences', {
-          email,
-          path: window.location.pathname
-        })
-        
+        logger.info('Login successful, saving preferences')
         try {
           localStorage.setItem('rememberMe', rememberMe.toString())
-          logger.info('Remember me preference saved')
         } catch (err) {
           logger.error('Failed to save remember me preference:', err)
         }
-
         toast({
           title: "Success",
           description: "Successfully signed in",
@@ -130,7 +123,7 @@ export function LoginForm() {
                 Password
               </Label>
               <Link 
-                href="/reset-password"
+                href={AUTH_ROUTES.resetPassword}
                 className="text-sm text-primary hover:text-primary/80 transition-colors"
               >
                 Forgot password?
@@ -180,7 +173,7 @@ export function LoginForm() {
           </Button>
           <p className="text-center text-sm text-foreground/60">
             Don&apos;t have an account?{' '}
-            <Link href="/auth/register" className="text-primary hover:text-primary/80 transition-colors font-medium">
+            <Link href={AUTH_ROUTES.register} className="text-primary hover:text-primary/80 transition-colors font-medium">
               Sign up
             </Link>
           </p>

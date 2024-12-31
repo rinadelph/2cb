@@ -1,6 +1,8 @@
 import { useEffect } from 'react'
 import { useRouter } from 'next/router'
 import { createClientComponentClient } from '@supabase/auth-helpers-nextjs'
+import { AUTH_ROUTES } from '@/lib/auth'
+import { logger } from '@/lib/debug'
 
 export default function AuthCallback() {
   const router = useRouter()
@@ -11,9 +13,10 @@ export default function AuthCallback() {
       try {
         const { error } = await supabase.auth.getSession()
         if (error) throw error
-        router.push('/dashboard')
+        router.push(AUTH_ROUTES.dashboard)
       } catch (error) {
-        router.push('/auth/login')
+        logger.error('Auth callback error:', error)
+        router.push(AUTH_ROUTES.login)
       }
     }
 

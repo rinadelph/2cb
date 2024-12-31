@@ -5,36 +5,37 @@ import {
   User, Bell, Shield, CreditCard, Building2, 
   Settings as SettingsIcon 
 } from "lucide-react";
+import { AUTH_ROUTES } from "@/lib/auth";
 
 const settingsNavItems = [
   {
     title: "Profile",
-    href: "/settings/profile",
+    href: `${AUTH_ROUTES.settings}/profile`,
     icon: User,
   },
   {
     title: "Notifications",
-    href: "/settings/notifications",
+    href: `${AUTH_ROUTES.settings}/notifications`,
     icon: Bell,
   },
   {
     title: "Security",
-    href: "/settings/security",
+    href: `${AUTH_ROUTES.settings}/security`,
     icon: Shield,
   },
   {
     title: "Billing",
-    href: "/settings/billing",
+    href: `${AUTH_ROUTES.settings}/billing`,
     icon: CreditCard,
   },
   {
     title: "Broker Info",
-    href: "/settings/broker",
+    href: `${AUTH_ROUTES.settings}/broker`,
     icon: Building2,
   },
   {
     title: "Advanced",
-    href: "/settings/advanced",
+    href: `${AUTH_ROUTES.settings}/advanced`,
     icon: SettingsIcon,
   },
 ];

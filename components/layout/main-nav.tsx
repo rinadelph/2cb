@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { useAuth } from "@/lib/auth/auth-context";
+import { AUTH_ROUTES } from "@/lib/auth";
 
 export function MainNav() {
   const { user } = useAuth();
@@ -15,19 +16,19 @@ export function MainNav() {
       {user && (
         <nav className="hidden md:flex gap-6">
           <Link
-            href="/dashboard"
+            href={AUTH_ROUTES.dashboard}
             className="text-sm font-medium text-muted-foreground hover:text-primary transition-colors"
           >
             Dashboard
           </Link>
           <Link
-            href="/listings"
+            href={AUTH_ROUTES.listings}
             className="text-sm font-medium text-muted-foreground hover:text-primary transition-colors"
           >
             Listings
           </Link>
           <Link
-            href="/analytics"
+            href={AUTH_ROUTES.analytics}
             className="text-sm font-medium text-muted-foreground hover:text-primary transition-colors"
           >
             Analytics

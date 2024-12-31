@@ -21,6 +21,7 @@ import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/components/ui/use-toast";
 import { Loader2 } from "lucide-react";
+import { AUTH_ROUTES } from '@/lib/auth';
 
 export default function EditListingPage() {
   const router = useRouter();
@@ -42,7 +43,7 @@ export default function EditListingPage() {
             description: "Listing not found",
             variant: "destructive",
           });
-          router.push('/listings');
+          router.push(AUTH_ROUTES.listings);
           return getDefaultValues();
         }
         return result.listing;
@@ -115,7 +116,7 @@ export default function EditListingPage() {
         description: "Please sign in to edit listings",
         variant: "destructive",
       });
-      router.push('/login');
+      router.push(AUTH_ROUTES.login);
     }
   }, [user, router, toast]);
 

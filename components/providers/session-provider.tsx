@@ -4,13 +4,7 @@ import { useSessionTimeout } from '@/hooks/useSessionTimeout'
 import { useEffect } from 'react'
 import { usePathname } from 'next/navigation'
 import { logger } from '@/lib/debug'
-
-const PUBLIC_PATHS = [
-  '/auth/login',
-  '/auth/register',
-  '/auth/reset-password',
-  '/auth/verify-email',
-]
+import { AUTH_ROUTES, PUBLIC_ROUTES } from '@/lib/auth'
 
 export function SessionProvider({ children }: { children: React.ReactNode }) {
   useSessionTimeout()
@@ -18,7 +12,7 @@ export function SessionProvider({ children }: { children: React.ReactNode }) {
 
   useEffect(() => {
     // Only log path changes for authenticated routes
-    if (!PUBLIC_PATHS.includes(pathname)) {
+    if (!PUBLIC_ROUTES.includes(pathname)) {
       logger.debug('Navigation to protected route', { pathname })
     }
   }, [pathname])

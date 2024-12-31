@@ -3,6 +3,7 @@ import { UserMenu } from "./user-menu";
 import { MainNav } from "./main-nav";
 import Link from "next/link";
 import { useAuth } from "@/lib/auth/auth-context";
+import { AUTH_ROUTES } from "@/lib/auth";
 import { authLogger } from "@/lib/auth/auth-logger";
 import { useRouter } from 'next/router';
 
@@ -19,9 +20,9 @@ export function Header() {
           <nav className="flex items-center space-x-2">
             {user ? (
               <UserMenu user={user} />
-            ) : pathname && !pathname.startsWith('/auth/') && (
+            ) : pathname && !pathname.startsWith(AUTH_ROUTES.login) && (
               <Button asChild variant="secondary">
-                <Link href="/auth/login">Sign In</Link>
+                <Link href={AUTH_ROUTES.login}>Sign In</Link>
               </Button>
             )}
           </nav>
@@ -29,4 +30,6 @@ export function Header() {
       </div>
     </header>
   );
-} 
+}
+
+export default Header; 

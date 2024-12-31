@@ -3,6 +3,7 @@
 import { useEffect } from 'react'
 import { useRouter } from 'next/router'
 import { useAuth } from '@/hooks/useAuth'
+import { AUTH_ROUTES } from "@/lib/auth";
 
 export function AuthCallback() {
   const router = useRouter()
@@ -10,7 +11,7 @@ export function AuthCallback() {
 
   useEffect(() => {
     if (session) {
-      router.push('/dashboard')
+      router.push(AUTH_ROUTES.dashboard)
     }
   }, [session, router])
 

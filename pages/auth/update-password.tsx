@@ -9,6 +9,7 @@ import { Card } from "@/components/ui/card";
 import { Loader2 } from 'lucide-react';
 import { createClientComponentClient } from '@supabase/auth-helpers-nextjs';
 import { logger } from '@/lib/debug';
+import { AUTH_ROUTES } from '@/lib/auth';
 
 export default function UpdatePassword() {
   const [password, setPassword] = useState('');
@@ -31,13 +32,12 @@ export default function UpdatePassword() {
           searchParams: router.asPath,
         });
 
-        // If no session and no error in URL, might be direct access
         if (!session && !router.query.error) {
           logger.warn('No session found on update password page', {
             path: router.asPath,
             query: router.query
           });
-          router.push('/auth/error?error=access_denied&error_description=No+valid+session+found');
+          router.push(`${AUTH_ROUTES.login}?error=access_denied&error_description=No+valid+session+found`);
         }
       } catch (err) {
         logger.error('Error checking session:', err);
