@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import Image from 'next/image';
 import { supabase } from '../../../lib/supabaseClient';
 import { logInfo, logError } from '../../../lib/supabaseClient';
 
@@ -77,10 +78,13 @@ const ProfilePicture: React.FC<ProfilePictureProps> = ({ profilePictureUrl, user
     <div className="flex flex-col items-center">
       {profilePictureUrl ? (
         <div className="relative">
-          <img 
+          <Image 
             src={profilePictureUrl} 
             alt="Profile Picture"
-            style={{ width: '100%', height: 'auto', maxWidth: '300px' }} // Adjust maxWidth as needed
+            width={300}
+            height={300}
+            style={{ width: '100%', height: 'auto' }}
+            className="max-w-[300px]"
           />
           <button
             onClick={handleDelete}
@@ -95,13 +99,17 @@ const ProfilePicture: React.FC<ProfilePictureProps> = ({ profilePictureUrl, user
           <span className="text-gray-500">No Image</span>
         </div>
       )}
-      <input
-        type="file"
-        accept="image/*"
-        onChange={handleFileChange}
-        className="mt-4"
-        disabled={isUploading}
-      />
+      <div className="mt-4">
+        <label htmlFor="profile-picture" className="sr-only">Choose profile picture</label>
+        <input
+          id="profile-picture"
+          type="file"
+          accept="image/*"
+          onChange={handleFileChange}
+          className="mt-4"
+          disabled={isUploading}
+        />
+      </div>
       {isUploading && <p>Uploading...</p>}
     </div>
   );

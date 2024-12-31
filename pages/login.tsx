@@ -5,6 +5,7 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
 import Link from 'next/link';
+import Image from 'next/image';
 import { useAuth } from '@/lib/auth/auth-context';
 import { Button } from '@/components/ui/button';
 import {
@@ -77,7 +78,7 @@ export default function LoginPage() {
       <div className="relative hidden h-full flex-col bg-muted p-10 text-white lg:flex dark:border-r">
         <div className="absolute inset-0 bg-zinc-900" />
         <div className="relative z-20 flex items-center text-lg font-medium">
-          <img src="/logo.png" alt="2CB Logo" className="h-8 w-8 mr-2" />
+          <Image src="/logo.png" alt="2CB Logo" width={32} height={32} className="mr-2" />
           2Click Broker
         </div>
         <div className="relative z-20 mt-auto">
