@@ -22,7 +22,11 @@ export async function GET(req: Request) {
     // Get user agent info
     const userAgent = req.headers.get('user-agent') || ''
     const parser = new UAParser(userAgent)
+    const deviceType = parser.getDevice().type
     const deviceInfo = {
+      type: deviceType === 'mobile' ? 'mobile' as const :
+            deviceType === 'tablet' ? 'tablet' as const :
+            deviceType === 'desktop' ? 'desktop' as const : 'unknown' as const,
       browser: `${parser.getBrowser().name} ${parser.getBrowser().version}`,
       os: `${parser.getOS().name} ${parser.getOS().version}`,
       ip: req.headers.get('x-forwarded-for') || 'unknown'
@@ -30,9 +34,10 @@ export async function GET(req: Request) {
 
     // Enhance session with additional info
     const enhancedSession: SessionInfo = {
-      ...session,
+      id: session.user.id,
       lastActive: new Date().toISOString(),
-      deviceInfo
+      deviceInfo,
+      current: true
     }
     
     logger.info('Session retrieved', { 
@@ -56,7 +61,7 @@ export async function DELETE(req: Request) {
   try {
     const supabase = createRouteHandlerClient({ cookies })
     const { searchParams } = new URL(req.url)
-    const scope = searchParams.get('scope') as 'global' | 'current' | undefined
+    const scope = searchParams.get('scope') as 'global' | 'local' | 'others' | undefined
 
     if (!scope) {
       return NextResponse.json(

@@ -3,77 +3,86 @@ import { SessionActivity } from '@/types/auth'
 
 export type SecurityAlert = {
   id: string
-  type: 'warning' | 'critical' | 'info'
+  type: 'suspicious_activity' | 'multiple_failures' | 'new_device' | 'new_location'
+  severity: 'low' | 'medium' | 'high'
   message: string
   timestamp: string
-  metadata?: Record<string, any>
+  metadata: Record<string, any>
 }
 
-export class SecurityAlertSystem {
-  private static instance: SecurityAlertSystem
+export class SecurityMonitor {
   private alerts: SecurityAlert[] = []
+  private readonly maxFailedAttempts = 3
+  private readonly failureWindow = 15 * 60 * 1000 // 15 minutes in milliseconds
+  private failedAttempts: { [key: string]: { count: number; lastAttempt: number }[] } = {}
 
-  private constructor() {}
-
-  static getInstance(): SecurityAlertSystem {
-    if (!SecurityAlertSystem.instance) {
-      SecurityAlertSystem.instance = new SecurityAlertSystem()
-    }
-    return SecurityAlertSystem.instance
+  constructor() {
+    this.alerts = []
   }
 
-  analyzeSessionActivity(activity: SessionActivity): SecurityAlert | null {
-    // Analyze for suspicious patterns
+  public addActivity(activity: SessionActivity) {
     const alert = this.detectSuspiciousActivity(activity)
     if (alert) {
       this.alerts.push(alert)
-      logger.warn('Security alert generated', { alert })
-      return alert
+      logger.warn('Security alert detected', { alert })
     }
-    return null
   }
 
   private detectSuspiciousActivity(activity: SessionActivity): SecurityAlert | null {
-    const { action, deviceInfo, timestamp } = activity
+    const { status, device, timestamp, ipAddress } = activity
 
     // Check for multiple failed attempts
-    if (action === 'expired') {
-      return {
-        id: crypto.randomUUID(),
-        type: 'warning',
-        message: 'Multiple session expiries detected',
-        timestamp: new Date().toISOString(),
-        metadata: { deviceInfo, timestamp }
+    if (status === 'expired') {
+      const userFailures = this.failedAttempts[ipAddress] || []
+      const recentFailures = userFailures.filter(
+        f => Date.now() - f.lastAttempt < this.failureWindow
+      )
+
+      if (recentFailures.length >= this.maxFailedAttempts) {
+        return {
+          id: crypto.randomUUID(),
+          type: 'multiple_failures',
+          severity: 'high',
+          message: `Multiple failed login attempts detected from IP ${ipAddress}`,
+          timestamp: new Date().toISOString(),
+          metadata: {
+            ipAddress,
+            failureCount: recentFailures.length,
+            device
+          }
+        }
       }
+
+      this.failedAttempts[ipAddress] = [
+        ...recentFailures,
+        { count: recentFailures.length + 1, lastAttempt: Date.now() }
+      ]
     }
 
-    // Check for unusual locations/devices
-    if (action === 'created' && this.isUnusualLocation(deviceInfo.ip)) {
+    // Check for new device or location
+    const ip = activity.ipAddress
+    if (status === 'active' && device) {
       return {
         id: crypto.randomUUID(),
-        type: 'critical',
-        message: 'Login from unusual location detected',
+        type: 'new_device',
+        severity: 'medium',
+        message: `New device detected: ${device}`,
         timestamp: new Date().toISOString(),
-        metadata: { deviceInfo, timestamp }
+        metadata: {
+          device,
+          ipAddress
+        }
       }
     }
 
     return null
   }
 
-  private isUnusualLocation(ip: string): boolean {
-    // Implement IP-based location checking
-    // This is a placeholder - you'd want to implement proper IP geolocation
-    return false
+  public getAlerts(): SecurityAlert[] {
+    return this.alerts
   }
 
-  getRecentAlerts(): SecurityAlert[] {
-    return this.alerts.slice(-10) // Get last 10 alerts
+  public clearAlerts() {
+    this.alerts = []
   }
-
-  clearAlert(id: string) {
-    this.alerts = this.alerts.filter(alert => alert.id !== id)
-  }
-}
-
-export const securityAlerts = SecurityAlertSystem.getInstance() 
+} 

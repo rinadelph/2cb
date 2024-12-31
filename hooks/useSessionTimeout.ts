@@ -1,11 +1,12 @@
 "use client"
 
+import * as React from 'react'
 import { useEffect, useRef, useCallback } from 'react'
 import { useRouter } from 'next/router'
 import { useAuth } from './useAuth'
 import { useToast } from '@/components/ui/use-toast'
 import { logger } from '@/lib/debug'
-import { Button } from '@/components/ui/button'
+import { ToastAction } from '@/components/ui/toast'
 import { SESSION_CONFIG } from '@/lib/auth/session-config'
 
 const TIMEOUT_WARNING = SESSION_CONFIG.REFRESH_THRESHOLD * 1000 // Convert to milliseconds
@@ -67,37 +68,40 @@ export function useSessionTimeout() {
   }, [resetTimers])
 
   const showTimeoutWarning = () => {
+    const handleSessionExtension = async () => {
+      try {
+        const session = await refreshSession()
+        if (session) {
+          toast({
+            title: "Session Extended",
+            description: "Your session has been extended successfully.",
+            variant: "default",
+          })
+        } else {
+          toast({
+            title: "Error",
+            description: "Failed to extend session. Please try logging in again.",
+            variant: "destructive",
+          })
+        }
+      } catch (error) {
+        console.error('Failed to refresh session:', error)
+        toast({
+          title: "Error",
+          description: "An unexpected error occurred.",
+          variant: "destructive",
+        })
+      }
+    }
+
     toast({
       title: "Session Timeout Warning",
       description: "Your session will expire in 5 minutes. Would you like to stay signed in?",
-      action: {
-        label: "Stay Signed In",
-        onClick: async () => {
-          try {
-            const { error } = await refreshSession()
-            if (!error) {
-              toast({
-                title: "Session Extended",
-                description: "Your session has been extended successfully.",
-                variant: "success",
-              })
-            } else {
-              toast({
-                title: "Error",
-                description: "Failed to extend session. Please try logging in again.",
-                variant: "destructive",
-              })
-            }
-          } catch (error) {
-            console.error('Failed to refresh session:', error)
-            toast({
-              title: "Error",
-              description: "An unexpected error occurred.",
-              variant: "destructive",
-            })
-          }
-        }
-      }
+      action: React.createElement(ToastAction, {
+        altText: "Stay Signed In",
+        onClick: handleSessionExtension,
+        children: "Stay Signed In"
+      }) as React.ReactElement
     })
   }
 } 

@@ -1,32 +1,42 @@
-import { useEffect, useRef } from 'react';
-import { Loader } from '@googlemaps/js-api-loader';
+import { Loader } from "@googlemaps/js-api-loader";
+import React, { useEffect, useRef } from "react";
 
 interface MapProps {
-  latitude: number;
-  longitude: number;
+  center: { lat: number; lng: number };
+  zoom?: number;
 }
 
-export function Map({ latitude, longitude }: MapProps) {
-  const mapRef = useRef(null);
+const Map: React.FC<MapProps> = ({ center, zoom = 15 }) => {
+  const mapRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     const loader = new Loader({
-      apiKey: process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY,
+      apiKey: process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY || '',
       version: "weekly",
+      libraries: ["places"]
     });
 
-    loader.load().then(() => {
-      const map = new google.maps.Map(mapRef.current, {
-        center: { lat: latitude, lng: longitude },
-        zoom: 15,
-      });
+    let map: google.maps.Map | null = null;
 
-      new google.maps.Marker({
-        position: { lat: latitude, lng: longitude },
-        map: map,
-      });
+    loader.load().then((google) => {
+      if (mapRef.current) {
+        map = new google.maps.Map(mapRef.current, {
+          center,
+          zoom,
+        });
+      }
+    }).catch((error) => {
+      console.error("Error loading Google Maps:", error);
     });
-  }, [latitude, longitude]);
 
-  return <div ref={mapRef} style={{ width: '100%', height: '400px' }} />;
-}
+    return () => {
+      if (map) {
+        // Cleanup if needed
+      }
+    };
+  }, [center, zoom]);
+
+  return <div ref={mapRef} style={{ width: "100%", height: "400px" }} />;
+};
+
+export default Map;

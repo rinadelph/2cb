@@ -36,7 +36,7 @@ export async function middleware(req: NextRequest) {
 
     // If accessing protected route without auth
     if (PROTECTED_ROUTES.some(route => pathname.startsWith(route)) && !session) {
-      logger.warning('Unauthorized access attempt', {
+      logger.warn('Unauthorized access attempt', {
         path: pathname,
         timestamp: new Date().toISOString()
       })

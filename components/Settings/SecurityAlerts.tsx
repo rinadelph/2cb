@@ -1,29 +1,31 @@
 import { useEffect, useState } from 'react'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
-import { SecurityAlert, securityAlerts } from '@/lib/security/alerts'
+import { SecurityAlert, SecurityMonitor } from '@/lib/security/alerts'
 import { AlertTriangle, Shield, Info } from 'lucide-react'
 import { Button } from '@/components/ui/button'
+
+const securityMonitor = new SecurityMonitor()
 
 export function SecurityAlerts() {
   const [alerts, setAlerts] = useState<SecurityAlert[]>([])
 
   useEffect(() => {
-    // Poll for new alerts every minute
-    const interval = setInterval(() => {
-      setAlerts(securityAlerts.getRecentAlerts())
-    }, 60000)
-
-    return () => clearInterval(interval)
+    setAlerts(securityMonitor.getAlerts())
   }, [])
 
-  const getAlertIcon = (type: SecurityAlert['type']) => {
-    switch (type) {
-      case 'critical':
-        return <AlertTriangle className="h-4 w-4 text-destructive" />
-      case 'warning':
-        return <Shield className="h-4 w-4 text-yellow-500" />
-      default:
-        return <Info className="h-4 w-4 text-blue-500" />
+  const handleClearAlerts = () => {
+    securityMonitor.clearAlerts()
+    setAlerts([])
+  }
+
+  const getSeverityIcon = (severity: SecurityAlert['severity']) => {
+    switch (severity) {
+      case 'high':
+        return <AlertTriangle className="h-5 w-5 text-destructive" />
+      case 'medium':
+        return <Shield className="h-5 w-5 text-warning" />
+      case 'low':
+        return <Info className="h-5 w-5 text-muted-foreground" />
     }
   }
 
@@ -32,41 +34,32 @@ export function SecurityAlerts() {
       <CardHeader>
         <CardTitle>Security Alerts</CardTitle>
         <CardDescription>
-          Recent security events and notifications
+          View and manage security alerts for your account
         </CardDescription>
       </CardHeader>
-      <CardContent className="space-y-4">
+      <CardContent>
         {alerts.length === 0 ? (
-          <p className="text-muted-foreground text-center py-4">
-            No security alerts
-          </p>
+          <p className="text-muted-foreground">No security alerts</p>
         ) : (
-          alerts.map(alert => (
-            <div
-              key={alert.id}
-              className="flex items-center justify-between p-4 border rounded-lg"
-            >
-              <div className="flex items-center space-x-4">
-                {getAlertIcon(alert.type)}
-                <div>
+          <div className="space-y-4">
+            {alerts.map((alert) => (
+              <div
+                key={alert.id}
+                className="flex items-start space-x-4 rounded-lg border p-4"
+              >
+                {getSeverityIcon(alert.severity)}
+                <div className="flex-1 space-y-1">
                   <p className="font-medium">{alert.message}</p>
                   <p className="text-sm text-muted-foreground">
                     {new Date(alert.timestamp).toLocaleString()}
                   </p>
                 </div>
               </div>
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => {
-                  securityAlerts.clearAlert(alert.id)
-                  setAlerts(securityAlerts.getRecentAlerts())
-                }}
-              >
-                Dismiss
-              </Button>
-            </div>
-          ))
+            ))}
+            <Button onClick={handleClearAlerts} variant="outline" className="w-full">
+              Clear All Alerts
+            </Button>
+          </div>
         )}
       </CardContent>
     </Card>

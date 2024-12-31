@@ -25,7 +25,7 @@ const ListingCard: React.FC<ListingCardProps> = ({ listing }) => {
       <p>{listing.description}</p>
       <p>Price: ${listing.price}</p>
       <p>Bedrooms: {listing.bedrooms}</p>
-      <p>Bathrooms: {listing.bathrooms_full + (listing.bathrooms_half * 0.5)}</p>
+      <p>Bathrooms: {(listing.bathrooms_full || 0) + ((listing.bathrooms_half || 0) * 0.5)}</p>
     </div>
   );
 };

@@ -1,6 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/lib/supabase';  // Change from '../lib/supabaseClient'
-import { Listing, CreateListingData } from '../types/listing';
+import { Listing, ListingFormData } from '../types/listing';
 import { useAuth } from './useAuth';
 
 export function useListings(id?: string) {
@@ -37,7 +37,7 @@ export function useListings(id?: string) {
     }
   };
 
-  const createListing = async (listingData: CreateListingData): Promise<Listing> => {
+  const createListing = async (listingData: ListingFormData): Promise<Listing> => {
     if (!user) throw new Error('User must be logged in to create a listing');
 
     const { data, error } = await supabase

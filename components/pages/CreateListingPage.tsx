@@ -75,7 +75,7 @@ const CreateListingPage: NextPage = () => {
   }, []);
 
   // 1. Authentication hooks
-  const { user, loading } = useAuth();
+  const { user, isLoading } = useAuth();
   const router = useRouter();
   const { toast } = useToast();
 
@@ -251,7 +251,7 @@ const CreateListingPage: NextPage = () => {
 
   // 5. Effects
   useEffect(() => {
-    if (!loading && !user) {
+    if (!isLoading && !user) {
       toast({
         title: "Authentication Required",
         description: "Please sign in to create a listing",
@@ -259,10 +259,10 @@ const CreateListingPage: NextPage = () => {
       });
       router.push('/login');
     }
-  }, [user, loading, router, toast]);
+  }, [user, isLoading, router, toast]);
 
   // Show loading state while checking auth
-  if (!isMounted || loading || !user) {
+  if (!isMounted || isLoading || !user) {
     return (
       <Layout>
         <div className="container max-w-2xl mx-auto p-6">

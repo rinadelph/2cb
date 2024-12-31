@@ -8,16 +8,16 @@ import { Loader2 } from 'lucide-react';
 import { AUTH_ROUTES } from '@/lib/auth';
 
 export default function HomePage() {
-  const { user, loading } = useAuth();
+  const { user, isLoading } = useAuth();
   const router = useRouter();
 
   useEffect(() => {
-    if (!loading && !user) {
+    if (!isLoading && !user) {
       router.push(AUTH_ROUTES.login);
-    } else if (!loading && user) {
+    } else if (!isLoading && user) {
       router.push(AUTH_ROUTES.dashboard);
     }
-  }, [user, loading, router]);
+  }, [user, isLoading, router]);
 
   // Show loading state while checking auth
   return (

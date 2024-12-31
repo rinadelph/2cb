@@ -19,9 +19,11 @@ export function ActiveSessions() {
   }, [])
 
   const loadSessions = async () => {
-    const { data, error } = await getActiveSessions()
-    if (data && !error) {
-      setSessions(data.sessions)
+    try {
+      const sessions = await getActiveSessions()
+      setSessions(sessions)
+    } catch (error) {
+      console.error('Failed to load sessions:', error)
     }
     setIsLoading(false)
   }
@@ -73,7 +75,7 @@ export function ActiveSessions() {
               <div>
                 <p className="font-medium">{session.deviceInfo.browser}</p>
                 <p className="text-sm text-muted-foreground">
-                  {session.deviceInfo.os} • {session.deviceInfo.ip}
+                  {session.deviceInfo.os} • {session.location?.ip || 'Unknown IP'}
                 </p>
                 <p className="text-xs text-muted-foreground">
                   Last active {formatDistanceToNow(new Date(session.lastActive))} ago

@@ -15,7 +15,7 @@ import { motion } from 'framer-motion';
 import { AvatarUpload } from '@/components/profile/AvatarUpload';
 
 const ProfilePage: NextPage = () => {
-  const { user, loading, updateProfile } = useAuth();
+  const { user, isLoading, updateProfile } = useAuth();
   const { toast } = useToast();
   const [isUpdating, setIsUpdating] = useState(false);
   const [profileData, setProfileData] = useState({
@@ -24,7 +24,7 @@ const ProfilePage: NextPage = () => {
     phone: user?.user_metadata?.phone || '',
   });
 
-  if (loading) {
+  if (isLoading) {
     return (
       <Layout>
         <div className="flex justify-center items-center min-h-[60vh]">
@@ -94,13 +94,15 @@ const ProfilePage: NextPage = () => {
                   </CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-6">
-                  <AvatarUpload
-                    userId={user?.id}
-                    currentAvatarUrl={user?.user_metadata?.avatar_url}
-                    onUploadComplete={(url) => {
-                      updateProfile({ avatar_url: url });
-                    }}
-                  />
+                  {user && (
+                    <AvatarUpload
+                      userId={user.id}
+                      currentAvatarUrl={user?.user_metadata?.avatar_url}
+                      onUploadComplete={(url) => {
+                        updateProfile({ avatar_url: url });
+                      }}
+                    />
+                  )}
 
                   <form onSubmit={handleUpdateProfile} className="space-y-4">
                     <div className="grid gap-2">

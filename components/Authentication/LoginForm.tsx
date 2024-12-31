@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useAuth } from '@/hooks/useAuth'
 import { useToast } from '@/components/ui/use-toast'
 import { logger } from '@/lib/debug'
@@ -9,6 +9,7 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Checkbox } from '@/components/ui/checkbox'
 import Link from 'next/link'
+import { useRouter } from 'next/router'
 import { Card, CardContent, CardFooter, CardHeader } from '@/components/ui/card'
 import { Loader2 } from 'lucide-react'
 import { AUTH_ROUTES } from '@/lib/auth'
@@ -16,18 +17,20 @@ import { AUTH_ROUTES } from '@/lib/auth'
 export function LoginForm() {
   const { signIn } = useAuth()
   const { toast } = useToast()
+  const router = useRouter()
   const [isLoading, setIsLoading] = useState<boolean>(false)
   const [formError, setFormError] = useState<string | null>(null)
-  const [rememberMe, setRememberMe] = useState<boolean>(() => {
+  const [rememberMe, setRememberMe] = useState<boolean>(false)
+
+  useEffect(() => {
     try {
       const remembered = localStorage.getItem('rememberMe') === 'true'
       logger.info('Loaded remember me preference:', { remembered })
-      return remembered
+      setRememberMe(remembered)
     } catch (err) {
       logger.error('Failed to load remember me preference:', err)
-      return false
     }
-  })
+  }, [])
 
   const onSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault()
@@ -72,6 +75,7 @@ export function LoginForm() {
           title: "Success",
           description: "Successfully signed in",
         })
+        router.push('/dashboard')
       }
     } catch (err) {
       logger.error('Unexpected error in login form:', err)
