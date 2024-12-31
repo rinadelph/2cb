@@ -49,7 +49,7 @@ export default function AnalyticsPage() {
           <Info className="h-4 w-4 text-blue-600" />
           <AlertTitle className="text-blue-800">Analytics Implementation in Progress</AlertTitle>
           <AlertDescription className="text-blue-700">
-            We're currently implementing real-time analytics. The data shown below is for demonstration purposes.
+            We&apos;re currently implementing real-time analytics. The data shown below is for demonstration purposes.
           </AlertDescription>
         </Alert>
 

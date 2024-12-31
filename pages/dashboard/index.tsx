@@ -37,7 +37,7 @@ export default function DashboardPage() {
     {
       title: "Total Views",
       value: "0",
-      description: "Your listings haven't received any views yet",
+      description: "Your listings haven&apos;t received any views yet",
       icon: Activity,
       emptyState: {
         message: "Share your listings to get views",
@@ -94,7 +94,7 @@ export default function DashboardPage() {
             Welcome back{user?.email ? `, ${user.email.split('@')[0]}!` : '!'}
           </h1>
           <p className="text-muted-foreground">
-            Here's an overview of your activity.
+            Here&apos;s an overview of your activity.
           </p>
         </motion.div>
 
