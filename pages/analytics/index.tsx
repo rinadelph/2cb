@@ -12,7 +12,26 @@ import {
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend } from 'recharts';
 
-const data = [
+interface ChartData {
+  date: string;
+  views: number;
+  commissionClicks: number;
+  conversions: number;
+}
+
+interface TooltipPayload {
+  name: string;
+  value: number;
+  color: string;
+}
+
+interface CustomTooltipProps {
+  active?: boolean;
+  payload?: TooltipPayload[];
+  label?: string;
+}
+
+const data: ChartData[] = [
   { date: '01 Sep', views: 4000, commissionClicks: 2400, conversions: 240 },
   { date: '05 Sep', views: 3000, commissionClicks: 1398, conversions: 139 },
   { date: '10 Sep', views: 2000, commissionClicks: 9800, conversions: 980 },
@@ -22,12 +41,12 @@ const data = [
   { date: '30 Sep', views: 3490, commissionClicks: 4300, conversions: 430 },
 ];
 
-const CustomTooltip = ({ active, payload, label }: any) => {
+const CustomTooltip: React.FC<CustomTooltipProps> = ({ active, payload, label }) => {
   if (active && payload && payload.length) {
     return (
       <div className="bg-white p-4 rounded-lg shadow-lg border border-gray-200">
         <p className="font-semibold text-gray-800 mb-2">{label}</p>
-        {payload.map((entry: any, index: number) => (
+        {payload.map((entry, index) => (
           <p key={index} className="text-sm" style={{ color: entry.color }}>
             {entry.name}: {entry.value}
           </p>

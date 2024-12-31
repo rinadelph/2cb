@@ -2,10 +2,12 @@ import { createRouteHandlerClient } from '@supabase/auth-helpers-nextjs'
 import { cookies } from 'next/headers'
 import { NextResponse } from 'next/server'
 import { logger } from '@/lib/debug'
+import type { SupabaseClient } from '@supabase/supabase-js'
+import type { Database } from '@/types/supabase'
 
 export async function GET(req: Request) {
   try {
-    const supabase = createRouteHandlerClient({ cookies })
+    const supabase = createRouteHandlerClient<Database>({ cookies })
     
     // Get current session
     const { data: { session }, error: sessionError } = await supabase.auth.getSession()
@@ -49,7 +51,7 @@ export async function GET(req: Request) {
   }
 }
 
-async function fetchUserData(supabase: any, userId: string) {
+async function fetchUserData(supabase: SupabaseClient<Database>, userId: string) {
   // Fetch all relevant user data
   const [
     { data: listings },

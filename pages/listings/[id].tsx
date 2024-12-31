@@ -141,7 +141,7 @@ export default function ListingPage() {
           bathrooms_half: Number(data.bathrooms_half) || 0,
           garage_spaces: Number(data.garage_spaces) || 0,
           carport_spaces: Number(data.carport_spaces) || 0,
-          images: data.listing_images?.map(img => img.url) || []
+          images: data.listing_images?.map((img: ListingImage) => img.url) || []
         };
 
         setListing(formattedListing);

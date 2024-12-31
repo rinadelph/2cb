@@ -1,5 +1,12 @@
 import { createClient } from '@supabase/supabase-js';
 
+interface ErrorWithDetails {
+  message?: string;
+  details?: unknown;
+  hint?: string;
+  code?: string | number;
+}
+
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
 const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
 
@@ -18,14 +25,17 @@ export const isAuthenticated = async () => {
   return !!session;
 };
 
-export const logError = (message: string, error: any) => {
+export const logError = (message: string, error: Error | ErrorWithDetails | unknown) => {
   console.error(`[ERROR] ${message}:`, error);
-  if (error.message) console.error('Error message:', error.message);
-  if (error.details) console.error('Error details:', error.details);
-  if (error.hint) console.error('Error hint:', error.hint);
-  if (error.code) console.error('Error code:', error.code);
+  if (error && typeof error === 'object') {
+    const err = error as ErrorWithDetails;
+    if (err.message) console.error('Error message:', err.message);
+    if (err.details) console.error('Error details:', err.details);
+    if (err.hint) console.error('Error hint:', err.hint);
+    if (err.code) console.error('Error code:', err.code);
+  }
 };
 
-export const logInfo = (message: string, data?: any) => {
+export const logInfo = (message: string, data?: unknown) => {
   console.log(`[INFO] ${message}`, data ? data : '');
 };

@@ -1,17 +1,21 @@
 type LogLevel = 'info' | 'warn' | 'error' | 'debug';
 
+interface LogData {
+  [key: string]: unknown;
+}
+
 interface LogMessage {
   timestamp: string;
   level: LogLevel;
   message: string;
-  data?: any;
+  data?: LogData;
   error?: Error;
 }
 
 class Logger {
   private isDevelopment = process.env.NODE_ENV === 'development';
 
-  private formatMessage(level: LogLevel, message: string, data?: any): LogMessage {
+  private formatMessage(level: LogLevel, message: string, data?: LogData | unknown): LogMessage {
     return {
       timestamp: new Date().toISOString(),
       level,
@@ -20,7 +24,7 @@ class Logger {
     };
   }
 
-  private sanitizeData(data: any) {
+  private sanitizeData(data: unknown): LogData | undefined {
     if (!data) return undefined;
 
     // Deep clone the data to avoid modifying the original
@@ -28,14 +32,14 @@ class Logger {
 
     // Remove sensitive fields
     const sensitiveFields = ['password', 'token', 'accessToken', 'refreshToken'];
-    const sanitizeObject = (obj: any) => {
+    const sanitizeObject = (obj: Record<string, unknown>): void => {
       if (typeof obj !== 'object' || obj === null) return;
 
       Object.keys(obj).forEach(key => {
         if (sensitiveFields.includes(key.toLowerCase())) {
           obj[key] = '[REDACTED]';
         } else if (typeof obj[key] === 'object') {
-          sanitizeObject(obj[key]);
+          sanitizeObject(obj[key] as Record<string, unknown>);
         }
       });
     };
@@ -44,7 +48,7 @@ class Logger {
     return sanitized;
   }
 
-  private log(level: LogLevel, message: string, data?: any) {
+  private log(level: LogLevel, message: string, data?: LogData | unknown): void {
     const logMessage = this.formatMessage(level, message, data);
 
     if (this.isDevelopment) {
@@ -65,37 +69,37 @@ class Logger {
     }
   }
 
-  info(message: string, data?: any) {
+  info(message: string, data?: LogData | unknown): void {
     this.log('info', message, data);
   }
 
-  warn(message: string, data?: any) {
+  warn(message: string, data?: LogData | unknown): void {
     this.log('warn', message, data);
   }
 
-  error(message: string, error?: Error | unknown, data?: any) {
+  error(message: string, error?: Error | unknown, data?: LogData | unknown): void {
     const errorData = error instanceof Error ? {
       name: error.name,
       message: error.message,
       stack: error.stack,
-      ...data
+      ...(data && typeof data === 'object' ? data : {})
     } : data;
 
     this.log('error', message, errorData);
   }
 
-  debug(message: string, data?: any) {
+  debug(message: string, data?: LogData | unknown): void {
     if (this.isDevelopment) {
       this.log('debug', message, data);
     }
   }
 
   // Auth specific logging methods
-  authAttempt(email: string) {
+  authAttempt(email: string): void {
     this.info('Authentication attempt', { email, timestamp: new Date().toISOString() });
   }
 
-  authSuccess(userId: string, email: string) {
+  authSuccess(userId: string, email: string): void {
     this.info('Authentication successful', {
       userId,
       email,
@@ -103,7 +107,7 @@ class Logger {
     });
   }
 
-  authFailure(email: string, reason: string) {
+  authFailure(email: string, reason: string): void {
     this.warn('Authentication failed', {
       email,
       reason,
@@ -111,7 +115,7 @@ class Logger {
     });
   }
 
-  sessionActivity(userId: string, action: string) {
+  sessionActivity(userId: string, action: string): void {
     this.info('Session activity', {
       userId,
       action,

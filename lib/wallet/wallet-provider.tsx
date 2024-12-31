@@ -2,11 +2,28 @@
 
 import React, { createContext, useContext, useEffect, useState } from 'react';
 
+interface EthereumProvider {
+  request: (args: { method: string; params?: unknown[] }) => Promise<unknown>;
+  on: (eventName: string, handler: (...args: unknown[]) => void) => void;
+  removeListener: (eventName: string, handler: (...args: unknown[]) => void) => void;
+  selectedAddress: string | null;
+  isMetaMask?: boolean;
+}
+
+interface SolanaProvider {
+  connect: () => Promise<{ publicKey: string }>;
+  disconnect: () => Promise<void>;
+  on: (eventName: string, handler: (...args: unknown[]) => void) => void;
+  off: (eventName: string, handler: (...args: unknown[]) => void) => void;
+  publicKey: string | null;
+  isPhantom?: boolean;
+}
+
 declare global {
   interface Window {
-    ethereum?: any;
-    solana?: any;
-    phantom?: any;
+    ethereum?: EthereumProvider;
+    solana?: SolanaProvider;
+    phantom?: SolanaProvider;
   }
 }
 
@@ -38,9 +55,11 @@ export function WalletProvider({ children }: { children: React.ReactNode }) {
 
         // Don't try to redefine properties if they already exist
         setIsReady(true);
+        setError(null);
       } catch (err) {
         // Log but don't throw error - wallet functionality is optional
         console.warn('Wallet initialization skipped:', err);
+        setError(err instanceof Error ? err : new Error('Failed to initialize wallets'));
         setIsReady(true); // Still set ready to true to not block the app
       }
     };

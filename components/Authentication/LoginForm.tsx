@@ -11,13 +11,11 @@ import { Checkbox } from '@/components/ui/checkbox'
 import Link from 'next/link'
 import { Card, CardContent, CardFooter, CardHeader } from '@/components/ui/card'
 import { Loader2 } from 'lucide-react'
-import { useRouter } from 'next/router'
 import { AUTH_ROUTES } from '@/lib/auth'
 
 export function LoginForm() {
   const { signIn } = useAuth()
   const { toast } = useToast()
-  const router = useRouter()
   const [isLoading, setIsLoading] = useState<boolean>(false)
   const [formError, setFormError] = useState<string | null>(null)
   const [rememberMe, setRememberMe] = useState<boolean>(() => {

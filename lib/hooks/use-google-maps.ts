@@ -1,8 +1,22 @@
 import { useEffect, useState } from 'react';
 
+interface GoogleMapsLibrary {
+  maps: {
+    Map: new (element: HTMLElement, options: unknown) => unknown;
+    places: {
+      Autocomplete: new (element: HTMLInputElement, options?: unknown) => unknown;
+      AutocompleteService: new () => unknown;
+      PlacesService: new (attrContainer: HTMLElement | unknown) => unknown;
+    };
+    Geocoder: new () => unknown;
+    LatLng: new (lat: number, lng: number) => unknown;
+    Marker: new (options: unknown) => unknown;
+  };
+}
+
 declare global {
   interface Window {
-    google: any;
+    google: GoogleMapsLibrary;
   }
 }
 
