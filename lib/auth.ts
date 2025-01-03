@@ -1,50 +1,54 @@
-import { supabase } from './supabaseClient'
+import { NextApiRequest } from 'next';
+import { getSupabaseClient } from './supabaseClient';
 
-export const AUTH_ROUTES = {
-  login: '/auth/login',
-  register: '/auth/register',
-  dashboard: '/dashboard',
-  resetPassword: '/reset-password',
-  callback: '/auth/callback',
-  verifyEmail: '/auth/verify-email',
-  settings: '/settings',
-  listings: '/listings',
-  createListing: '/listings/create',
-  manageListing: '/listings/manage',
-  editListing: '/listings/edit',
-  analytics: '/analytics'
-} as const
+export async function getAuthUser(req: NextApiRequest) {
+  try {
+    const supabase = getSupabaseClient();
+    
+    // Get the token from the request header
+    const authHeader = req.headers.authorization;
+    if (!authHeader?.startsWith('Bearer ')) {
+      return null;
+    }
 
-// Add route grouping types for better organization
-export const PROTECTED_ROUTES = [
-  AUTH_ROUTES.dashboard,
-  AUTH_ROUTES.createListing,
-  AUTH_ROUTES.manageListing,
-  AUTH_ROUTES.editListing,
-  AUTH_ROUTES.settings,
-  AUTH_ROUTES.analytics
-] as const
+    const token = authHeader.split(' ')[1];
+    
+    // Verify the token and get user data
+    const { data: { user }, error } = await supabase.auth.getUser(token);
+    
+    if (error || !user) {
+      console.error('Auth error:', error);
+      return null;
+    }
 
-export const PUBLIC_ROUTES = [
-  '/',
-  AUTH_ROUTES.login,
-  AUTH_ROUTES.register,
-  AUTH_ROUTES.callback,
-  AUTH_ROUTES.verifyEmail,
-  '/404'
-] as const
-
-export type AuthRoutes = typeof AUTH_ROUTES
-export type AuthRoutePath = AuthRoutes[keyof AuthRoutes]
-export type ProtectedRoute = typeof PROTECTED_ROUTES[number]
-export type PublicRoute = typeof PUBLIC_ROUTES[number]
-
-export async function getCurrentUser() {
-  const { data: { user } } = await supabase.auth.getUser()
-  return user
+    return {
+      id: user.id,
+      email: user.email,
+      role: user.role,
+    };
+  } catch (error) {
+    console.error('Auth helper error:', error);
+    return null;
+  }
 }
 
-export async function isEmailVerified() {
-  const user = await getCurrentUser()
-  return user?.email_confirmed_at ? true : false
+// Helper to get user from client-side
+export async function getCurrentUser() {
+  try {
+    const supabase = getSupabaseClient();
+    const { data: { user }, error } = await supabase.auth.getUser();
+    
+    if (error || !user) {
+      return null;
+    }
+
+    return {
+      id: user.id,
+      email: user.email,
+      role: user.role,
+    };
+  } catch (error) {
+    console.error('Get current user error:', error);
+    return null;
+  }
 }

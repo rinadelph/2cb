@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { useAuth } from "@/lib/auth/auth-context";
-import { AUTH_ROUTES } from "@/lib/auth";
+import { AUTH_ROUTES } from "@/lib/routes";
 
 export function MainNav() {
   const { user } = useAuth();

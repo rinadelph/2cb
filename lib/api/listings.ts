@@ -1,7 +1,7 @@
 import { supabase } from '../supabaseClient';
-import { Listing, ListingFormData } from '../../types/listing';
+import { ListingBase } from '@/types/listing';
 
-export const createListing = async (data: ListingFormData) => {
+export const createListing = async (data: Partial<ListingBase>) => {
   try {
     const { data: newListing, error } = await supabase
       .from('listings')
@@ -52,7 +52,7 @@ export async function getListingById(id: string) {
   }
 }
 
-export const updateListing = async (id: string, data: Partial<Listing>, userId?: string): Promise<Listing> => {
+export const updateListing = async (id: string, data: Partial<ListingBase>, userId?: string): Promise<ListingBase> => {
   try {
     let query = supabase
       .from('listings')
@@ -92,7 +92,7 @@ export async function deleteListing(id: string) {
   }
 }
 
-export const getListing = async (id: string): Promise<Listing | null> => {
+export const getListing = async (id: string): Promise<ListingBase | null> => {
   const { data, error } = await supabase
     .from('listings')
     .select('*')
@@ -105,4 +105,25 @@ export const getListing = async (id: string): Promise<Listing | null> => {
   }
 
   return data;
+};
+
+export const getTestListings = async (userId: string) => {
+  try {
+    const { data, error } = await supabase
+      .from('listings')
+      .select('*')
+      .eq('user_id', userId)
+      .ilike('mls_number', 'TEST%')
+      .order('created_at', { ascending: false });
+
+    if (error) {
+      console.error('Error fetching test listings:', error);
+      throw error;
+    }
+
+    return data;
+  } catch (error) {
+    console.error('Error in getTestListings:', error);
+    throw error;
+  }
 };

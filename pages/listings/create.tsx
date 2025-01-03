@@ -1,7 +1,3 @@
-import dynamic from 'next/dynamic';
-
-const CreateListingPage = dynamic(() => import('@/components/pages/CreateListingPage'), {
-  ssr: false
-});
+import CreateListingPage from '@/components/pages/CreateListingPage';
 
 export default CreateListingPage;

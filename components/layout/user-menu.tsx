@@ -1,6 +1,6 @@
 import { User } from '@supabase/supabase-js'
 import { useAuth } from '@/hooks/useAuth'
-import { AUTH_ROUTES } from '@/lib/auth'
+import { AUTH_ROUTES } from '@/lib/routes'
 import {
   DropdownMenu,
   DropdownMenuContent,

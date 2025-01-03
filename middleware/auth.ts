@@ -9,15 +9,18 @@ const PROTECTED_ROUTES = [
   '/listings/manage',
   '/listings/edit',
   '/settings'
-]
+] as const
 
 const PUBLIC_ROUTES = [
   '/',
   '/auth/login',
   '/auth/register',
   '/auth/callback',
+  '/reset-password',
+  '/auth/update-password',
+  '/auth/verify-email',
   '/404'
-]
+] as const
 
 export async function middleware(req: NextRequest) {
   const res = NextResponse.next()

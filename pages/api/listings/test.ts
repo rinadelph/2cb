@@ -1,118 +1,105 @@
 import { NextApiRequest, NextApiResponse } from 'next';
-import { createClient } from '@supabase/supabase-js';
-import { ListingFormValues } from '@/lib/schemas/listing-schema';
-
-// Create a Supabase client with the service role key
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY! // This is different from the anon key
-);
+import { getSupabaseClient } from '@/lib/supabaseClient';
+import { ListingBase } from '@/types/listing';
+import { getAuthUser } from '@/lib/auth';
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
+  // Only allow test listings in non-production environments
+  if (process.env.NODE_ENV === 'production') {
+    return res.status(403).json({ 
+      error: 'Test listings are not allowed in production' 
+    });
+  }
+
   if (req.method !== 'POST') {
     return res.status(405).json({ error: 'Method not allowed' });
   }
 
   try {
-    const { user_id } = req.body;
-    if (!user_id) {
-      throw new Error('User ID is required');
+    // Get authenticated user
+    const user = await getAuthUser(req);
+    if (!user) {
+      return res.status(401).json({ 
+        message: 'Unauthorized',
+        details: 'You must be logged in to create a test listing'
+      });
     }
 
-    // Create test listing data
-    const testData = {
-      user_id,
-      title: "Test Luxury Waterfront Villa",
-      description: "A stunning waterfront property perfect for luxury living. This test listing showcases all features of our platform.",
-      mls_number: "TEST" + Math.floor(Math.random() * 10000),
-      status: "draft",
-      address: "123 Test Beach Road",
-      city: "Miami Beach",
-      state: "FL",
-      zip_code: "33139",
-      county: "Miami-Dade",
-      property_type: "single_family" as const,
-      year_built: "2020",
-      bedrooms: 5,
-      bathrooms_full: 4,
-      bathrooms_half: 1,
-      square_feet_living: 4500,
-      square_feet_total: 6000,
-      lot_size_sf: 10000,
-      garage_spaces: 2,
-      carport_spaces: 0,
-      furnished: true,
-      pool: true,
-      waterfront: true,
-      water_access: true,
-      price: 2500000,
-      tax_amount: 25000,
-      tax_year: "2023",
-      maintenance_fee: 0,
-      special_assessment: false,
-      virtual_tour_url: "https://example.com/tour",
-      broker_remarks: "Test listing for demonstration purposes",
-      showing_instructions: "Contact agent for showing",
-      listing_office: "Test Luxury Realty",
-      listing_agent_name: "Test Agent",
-      listing_agent_phone: "(305) 555-0123",
-      listing_agent_email: "test@example.com",
-      listing_agent_license: "TEST12345"
+    // Get auth token from header
+    const authHeader = req.headers.authorization;
+    if (!authHeader?.startsWith('Bearer ')) {
+      return res.status(401).json({ 
+        message: 'Unauthorized',
+        details: 'Missing or invalid authorization header'
+      });
+    }
+
+    // Create a test listing
+    const testListing: Partial<ListingBase> = {
+      user_id: user.id, // Use authenticated user's ID
+      title: `Test Listing ${new Date().toISOString()}`,
+      description: 'This is a test listing created automatically',
+      status: 'draft',
+      property_type: 'single_family',
+      listing_type: 'sale',
+      price: 500000,
+      square_feet: 2500,
+      bedrooms: 4,
+      bathrooms: 2.5,
+      year_built: 2020,
+      lot_size: 0.25,
+      parking_spaces: 2,
+      stories: 2,
+      address: {
+        street_number: '123',
+        street_name: 'Test Street',
+        city: 'Test City',
+        state: 'FL',
+        zip: '33133',
+        country: 'US'
+      },
+      location: {
+        lat: 25.7617,
+        lng: -80.1918
+      },
+      features: ['Pool', 'Garage', 'Central AC'],
+      amenities: ['Gym', 'Pool', 'Tennis Court'],
+      images: [],
+      documents: [],
+      meta_data: {
+        is_test: true,
+        created_by: user.id,
+        created_at: new Date().toISOString()
+      }
     };
 
-    // Create main listing
-    const { data: listing, error: listingError } = await supabase
+    // Use test context for Supabase client
+    const supabase = getSupabaseClient('test');
+    const { data: listing, error } = await supabase
       .from('listings')
-      .insert([testData])
+      .insert([testListing])
       .select()
       .single();
 
-    if (listingError) {
-      console.error('Supabase error:', listingError);
-      throw listingError;
+    if (error) {
+      console.error('Error creating test listing:', {
+        error,
+        userId: user.id,
+        timestamp: new Date().toISOString()
+      });
+      throw error;
     }
 
-    if (listing) {
-      // Create listing features
-      const { error: featuresError } = await supabase
-        .from('listing_features')
-        .insert([{
-          listing_id: listing.id,
-          construction_type: ["CBS", "Impact Windows"],
-          interior_features: ["Smart Home", "Wine Cellar", "Chef's Kitchen"],
-          exterior_features: ["Pool", "Summer Kitchen", "Dock"],
-          parking_description: ["2 Car Garage", "Circular Driveway"],
-          lot_description: ["Waterfront", "Gated", "Landscaped"]
-        }]);
-
-      if (featuresError) throw featuresError;
-
-      // Create listing images
-      const testImages = [
-        "https://images.unsplash.com/photo-1512917774080-9991f1c4c750",
-        "https://images.unsplash.com/photo-1613490493576-7fde63acd811"
-      ];
-
-      const imageInserts = testImages.map((url, index) => ({
-        listing_id: listing.id,
-        url,
-        position: index
-      }));
-
-      const { error: imagesError } = await supabase
-        .from('listing_images')
-        .insert(imageInserts);
-
-      if (imagesError) throw imagesError;
-    }
-
-    return res.status(200).json({ success: true, listing });
-  } catch (error) {
-    console.error('Error creating test listing:', error);
+    return res.status(200).json(listing);
+  } catch (error: any) {
+    console.error('Error creating test listing:', {
+      error,
+      stack: error.stack,
+      timestamp: new Date().toISOString()
+    });
     return res.status(500).json({ 
-      error: 'Failed to create test listing', 
-      details: error instanceof Error ? error.message : 'Unknown error',
-      data: req.body
+      error: 'Failed to create test listing',
+      details: error.message
     });
   }
 } 

@@ -1,70 +1,80 @@
-export interface Listing {
-  id: string;
+import { ListingImage, ListingDocument } from './core';
+
+export interface ListingBase {
+  id?: string;
   user_id: string;
+  organization_id?: string;
   title: string;
-  description: string;
-  mls_number?: string;
-  status: "draft" | "active" | "pending" | "sold" | "archived";
-  address: string;
+  slug?: string;
+  description?: string;
+  status: 'draft' | 'pending' | 'active' | 'inactive' | 'expired' | 'sold';
+  property_type: 'single_family' | 'multi_family' | 'condo' | 'townhouse' | 'land' | 'commercial' | 'industrial';
+  listing_type: 'sale' | 'rent' | 'lease' | 'auction';
+  price: number;
+  
+  // Address fields (flat structure)
+  address_street_number: string;
+  address_street_name: string;
+  address_unit?: string;
   city: string;
   state: string;
   zip_code: string;
-  county: string;
-  folio_number?: string;
-  parcel_number?: string;
-  legal_description?: string;
-  property_type: "single_family" | "condo" | "townhouse" | "multi_family" | "land" | "commercial";
-  year_built?: string;
-  bedrooms?: number;
-  bathrooms_full?: number;
-  bathrooms_half?: number;
-  square_feet_living?: number;
-  square_feet_total?: number;
-  lot_size_sf?: number;
-  garage_spaces?: number;
-  carport_spaces?: number;
-  furnished: boolean;
-  pool: boolean;
-  waterfront: boolean;
-  water_access: boolean;
-  price: number;
-  tax_amount?: number;
-  tax_year?: string;
-  maintenance_fee?: number;
-  special_assessment: boolean;
-  virtual_tour_url?: string;
-  broker_remarks?: string;
-  showing_instructions?: string;
-  listing_office: string;
-  listing_agent_name: string;
-  listing_agent_phone: string;
-  listing_agent_email: string;
-  listing_agent_license: string;
-  created_at: string;
-  updated_at: string;
-  listing_features?: {
-    construction_type: string[];
-    interior_features: string[];
-    exterior_features: string[];
-    parking_description: string[];
-    lot_description: string[];
+  country: string;
+  
+  // Location fields
+  latitude?: number;
+  longitude?: number;
+  location: {
+    type: 'Point';
+    coordinates: [number, number]; // [longitude, latitude]
+    lat: number;
+    lng: number;
   };
-  listing_images?: {
-    url: string;
-    position: number;
-  }[];
+  
+  // Property details
+  square_feet?: number;
+  bedrooms?: number;
+  bathrooms?: number;
+  year_built?: number;
+  lot_size?: number;
+  parking_spaces?: number;
+  stories?: number;
+  
+  // JSON fields
+  features: Record<string, boolean>;
+  amenities: Record<string, boolean>;
+  images: ListingImage[];
+  documents: ListingDocument[];
+  meta_data: Record<string, unknown>;
+  
+  // Form helper (not in database)
+  address?: {
+    street_number: string;
+    street_name: string;
+    unit?: string;
+    city: string;
+    state: string;
+    zip: string;
+    country: string;
+  };
+  
+  // Timestamps
+  created_at?: string;
+  updated_at?: string;
+  published_at?: string;
+  expires_at?: string;
 }
 
-export interface ListingFormData extends Omit<Listing, 'id' | 'user_id' | 'created_at' | 'updated_at' | 'listing_features' | 'listing_images'> {
-  construction_type: string[];
-  interior_features: string[];
-  exterior_features: string[];
-  parking_description: string[];
-  lot_description: string[];
-  images: string[];
-}
-
-export interface ListingResponse {
-  listing: ListingFormData | null;
-  error: Error | null;
+// Export the full Listing type that includes commission fields
+export interface Listing extends ListingBase {
+  commission_amount?: number;
+  commission_type?: string;
+  commission_terms?: string;
+  commission_status?: string;
+  commission_visibility?: string;
+  commission_signature_data?: Record<string, unknown>;
+  commission_signed_at?: string;
+  commission_signed_by?: string;
+  commission_locked_at?: string;
+  commission_locked_by?: string;
 }

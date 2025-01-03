@@ -3,7 +3,7 @@ import { UserMenu } from "./user-menu";
 import { MainNav } from "./main-nav";
 import Link from "next/link";
 import { useAuth } from "@/lib/auth/auth-context";
-import { AUTH_ROUTES } from "@/lib/auth";
+import { AUTH_ROUTES } from '@/lib/routes';
 import { authLogger } from "@/lib/auth/auth-logger";
 import { useRouter } from 'next/router';
 

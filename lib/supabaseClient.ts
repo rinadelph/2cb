@@ -2,23 +2,58 @@ import { createClient } from '@supabase/supabase-js';
 
 interface ErrorWithDetails {
   message?: string;
-  details?: unknown;
+  details?: string;
   hint?: string;
-  code?: string | number;
+  code?: string;
 }
 
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
-const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
+const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!;
+const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
 
-if (!supabaseUrl || !supabaseAnonKey) {
-  throw new Error('Missing Supabase environment variables');
-}
+// Client-side singleton instance (using anon key)
+const supabase = createClient(supabaseUrl, supabaseAnonKey);
 
-export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
-  auth: {
-    persistSession: true
+// Server-side client with service role (only for trusted server operations)
+const getServiceClient = () => {
+  if (!supabaseServiceKey) {
+    throw new Error('SUPABASE_SERVICE_ROLE_KEY is not set');
   }
-});
+  return createClient(supabaseUrl, supabaseServiceKey, {
+    auth: {
+      autoRefreshToken: false,
+      persistSession: false
+    }
+  });
+};
+
+// Get appropriate client based on context
+export function getSupabaseClient(context?: 'server' | 'test') {
+  // Only use service role key in server context when explicitly requested
+  if (context === 'server' && process.env.NODE_ENV !== 'production') {
+    try {
+      return getServiceClient();
+    } catch (error) {
+      console.warn('Failed to get service client, falling back to anon client:', error);
+      return supabase;
+    }
+  }
+  
+  // For test operations in non-production
+  if (context === 'test' && process.env.NODE_ENV !== 'production') {
+    try {
+      return getServiceClient();
+    } catch (error) {
+      console.warn('Failed to get service client for test, falling back to anon client:', error);
+      return supabase;
+    }
+  }
+
+  return supabase;
+}
+
+// Export the client-side singleton instance
+export { supabase };
 
 export const isAuthenticated = async () => {
   const { data: { session } } = await supabase.auth.getSession();
