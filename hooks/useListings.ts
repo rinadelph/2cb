@@ -1,5 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { supabase } from '@/lib/supabaseClient';
+import { getSupabaseClient } from '@/lib/supabaseClient';
 import { Listing } from '@/types/listing';
 import { useAuth } from '@/lib/auth/auth-context';
 
@@ -15,6 +15,7 @@ export function useListings(id?: string) {
         isAuthenticated: !!user 
       });
       
+      const supabase = getSupabaseClient();
       const { data, error } = await supabase
         .from('listings')
         .select('*')
@@ -125,6 +126,7 @@ export function useListings(id?: string) {
         return [];
       }
 
+      const supabase = getSupabaseClient();
       // Query for user's listings and org listings
       const { data, error } = await supabase
         .from('listings')
@@ -197,6 +199,7 @@ export function useListings(id?: string) {
       }
     };
 
+    const supabase = getSupabaseClient();
     const { data, error } = await supabase
       .from('listings')
       .insert([dataToInsert])
@@ -273,6 +276,7 @@ export function useListings(id?: string) {
       })
     };
 
+    const supabase = getSupabaseClient();
     const { data, error } = await supabase
       .from('listings')
       .update(dataToUpdate)
@@ -337,6 +341,7 @@ export function useListings(id?: string) {
   const deleteListing = async (id: string): Promise<void> => {
     if (!user) throw new Error('User must be logged in to delete a listing');
 
+    const supabase = getSupabaseClient();
     const { error } = await supabase
       .from('listings')
       .delete()

@@ -9,7 +9,7 @@ import { Card } from "@/components/ui/card";
 import { Loader2 } from 'lucide-react';
 import { createClientComponentClient } from '@supabase/auth-helpers-nextjs';
 import { logger } from '@/lib/debug';
-import { AUTH_ROUTES } from '@/lib/auth';
+import { AUTH_ROUTES } from '@/constants/auth';
 
 export default function UpdatePassword() {
   const [password, setPassword] = useState('');

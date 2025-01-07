@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import Image from 'next/image';
-import { supabase } from '../../../lib/supabaseClient';
+import { getSupabaseClient } from '../../../lib/supabaseClient';
 import { logInfo, logError } from '../../../lib/supabaseClient';
 
 interface ProfilePictureProps {
@@ -21,6 +21,8 @@ const ProfilePicture: React.FC<ProfilePictureProps> = ({ profilePictureUrl, user
       const fileExt = file.name.split('.').pop();
       const fileName = `${userId}-${Math.random()}.${fileExt}`;
       const filePath = `profile-pictures/${fileName}`;
+
+      const supabase = getSupabaseClient();
 
       const { error: uploadError } = await supabase.storage
         .from('avatars')
@@ -57,6 +59,8 @@ const ProfilePicture: React.FC<ProfilePictureProps> = ({ profilePictureUrl, user
 
   const handleDelete = async () => {
     try {
+      const supabase = getSupabaseClient();
+
       const { error: updateError } = await supabase
         .from('profiles')
         .update({ profile_picture_url: null })

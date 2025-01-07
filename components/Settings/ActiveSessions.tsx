@@ -1,56 +1,97 @@
 "use client"
 
-import { useEffect, useState } from 'react'
-import { useAuth } from '@/hooks/useAuth'
-import { SessionInfo } from '@/types/auth'
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
+import { useState, useEffect, useCallback } from 'react'
+import { useAuth } from '@/lib/auth/auth-context'
 import { Button } from '@/components/ui/button'
-import { Loader2, Monitor, Smartphone, Laptop, LogOut } from 'lucide-react'
-import { formatDistanceToNow } from 'date-fns'
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
+import { useToast } from '@/components/ui/use-toast'
+import { Loader2 } from 'lucide-react'
+import { supabase } from '@/lib/supabase-client'
+
+interface SessionInfo {
+  id: string;
+  created_at: string;
+  last_active: string;
+  user_agent?: string;
+  ip_address?: string;
+  current: boolean;
+}
 
 export function ActiveSessions() {
-  const { getActiveSessions, revokeSession } = useAuth()
+  const { user } = useAuth()
   const [sessions, setSessions] = useState<SessionInfo[]>([])
   const [isLoading, setIsLoading] = useState(true)
   const [isRevoking, setIsRevoking] = useState<string | null>(null)
+  const { toast } = useToast()
 
-  useEffect(() => {
-    loadSessions()
-  }, [])
-
-  const loadSessions = async () => {
+  const loadSessions = useCallback(async () => {
     try {
-      const sessions = await getActiveSessions()
-      setSessions(sessions)
+      const { data: { session } } = await supabase.auth.getSession()
+      
+      if (!session) {
+        setSessions([])
+        return
+      }
+
+      setSessions([{
+        id: session.access_token,
+        created_at: new Date().toISOString(),
+        last_active: new Date().toISOString(),
+        user_agent: window.navigator.userAgent,
+        current: true
+      }])
     } catch (error) {
-      console.error('Failed to load sessions:', error)
+      console.error('Error loading sessions:', error)
+      toast({
+        title: 'Error',
+        description: 'Failed to load active sessions',
+        variant: 'destructive'
+      })
+    } finally {
+      setIsLoading(false)
     }
-    setIsLoading(false)
-  }
+  }, [toast])
 
   const handleRevoke = async (sessionId: string) => {
-    setIsRevoking(sessionId)
-    await revokeSession(sessionId)
-    await loadSessions()
-    setIsRevoking(null)
+    try {
+      setIsRevoking(sessionId)
+      await supabase.auth.signOut()
+      
+      toast({
+        title: 'Success',
+        description: 'Session revoked successfully'
+      })
+      
+      loadSessions()
+    } catch (error) {
+      console.error('Error revoking session:', error)
+      toast({
+        title: 'Error',
+        description: 'Failed to revoke session',
+        variant: 'destructive'
+      })
+    } finally {
+      setIsRevoking(null)
+    }
   }
 
-  const getDeviceIcon = (deviceInfo: SessionInfo['deviceInfo']) => {
-    const os = deviceInfo.os.toLowerCase()
-    if (os.includes('android') || os.includes('ios')) {
-      return <Smartphone className="h-4 w-4" />
+  useEffect(() => {
+    if (user) {
+      loadSessions()
     }
-    if (os.includes('windows') || os.includes('mac') || os.includes('linux')) {
-      return <Laptop className="h-4 w-4" />
-    }
-    return <Monitor className="h-4 w-4" />
-  }
+  }, [user, loadSessions])
 
   if (isLoading) {
     return (
-      <div className="flex items-center justify-center p-6">
-        <Loader2 className="h-6 w-6 animate-spin" />
-      </div>
+      <Card>
+        <CardHeader>
+          <CardTitle>Active Sessions</CardTitle>
+          <CardDescription>Manage your active sessions across devices</CardDescription>
+        </CardHeader>
+        <CardContent className="flex justify-center py-6">
+          <Loader2 className="h-6 w-6 animate-spin" />
+        </CardContent>
+      </Card>
     )
   }
 
@@ -58,44 +99,47 @@ export function ActiveSessions() {
     <Card>
       <CardHeader>
         <CardTitle>Active Sessions</CardTitle>
-        <CardDescription>
-          Manage your active sessions across different devices
-        </CardDescription>
+        <CardDescription>Manage your active sessions across devices</CardDescription>
       </CardHeader>
-      <CardContent className="space-y-4">
-        {sessions.map((session) => (
-          <div
-            key={session.id}
-            className="flex items-center justify-between p-4 border rounded-lg"
-          >
-            <div className="flex items-center space-x-4">
-              <div className="p-2 bg-primary/10 rounded-full">
-                {getDeviceIcon(session.deviceInfo)}
+      <CardContent>
+        {sessions.length === 0 ? (
+          <p className="text-sm text-muted-foreground">No active sessions found</p>
+        ) : (
+          <div className="space-y-4">
+            {sessions.map((session) => (
+              <div
+                key={session.id}
+                className="flex items-center justify-between rounded-lg border p-4"
+              >
+                <div className="space-y-1">
+                  <p className="text-sm font-medium">
+                    {session.current ? 'Current Session' : 'Other Session'}
+                  </p>
+                  <p className="text-sm text-muted-foreground">
+                    {session.user_agent || 'Unknown Device'}
+                  </p>
+                  <p className="text-xs text-muted-foreground">
+                    Last active: {new Date(session.last_active).toLocaleString()}
+                  </p>
+                </div>
+                {session.current && (
+                  <Button
+                    variant="destructive"
+                    size="sm"
+                    onClick={() => handleRevoke(session.id)}
+                    disabled={isRevoking === session.id}
+                  >
+                    {isRevoking === session.id ? (
+                      <Loader2 className="h-4 w-4 animate-spin" />
+                    ) : (
+                      'Sign Out'
+                    )}
+                  </Button>
+                )}
               </div>
-              <div>
-                <p className="font-medium">{session.deviceInfo.browser}</p>
-                <p className="text-sm text-muted-foreground">
-                  {session.deviceInfo.os} • {session.location?.ip || 'Unknown IP'}
-                </p>
-                <p className="text-xs text-muted-foreground">
-                  Last active {formatDistanceToNow(new Date(session.lastActive))} ago
-                </p>
-              </div>
-            </div>
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => handleRevoke(session.id)}
-              disabled={isRevoking === session.id}
-            >
-              {isRevoking === session.id ? (
-                <Loader2 className="h-4 w-4 animate-spin" />
-              ) : (
-                <LogOut className="h-4 w-4" />
-              )}
-            </Button>
+            ))}
           </div>
-        ))}
+        )}
       </CardContent>
     </Card>
   )

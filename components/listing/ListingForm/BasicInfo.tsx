@@ -1,16 +1,12 @@
 import React from 'react';
-import { UseFormReturn } from 'react-hook-form';
+import { useFormContext } from 'react-hook-form';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { ListingBase } from '@/types/listing';
 
-interface BasicInfoProps {
-  form: UseFormReturn<ListingBase>;
-}
-
-export const BasicInfo: React.FC<BasicInfoProps> = ({ form }) => {
-  const { register, formState: { errors } } = form;
+export const BasicInfo: React.FC = () => {
+  const { register, formState: { errors } } = useFormContext<ListingBase>();
 
   return (
     <div className="space-y-4">

@@ -6,7 +6,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
 import Link from 'next/link';
 import Image from 'next/image';
-import { supabase } from '@/lib/supabase-client';
+import { getSupabaseClient } from '@/lib/supabase-client';
 import { Button } from '@/components/ui/button';
 import {
   Form,
@@ -55,6 +55,7 @@ export default function SignupPage() {
         throw new Error('Please ensure your wallet is connected');
       }
 
+      const supabase = getSupabaseClient();
       const { error } = await supabase.auth.signUp({
         email: data.email,
         password: data.password,

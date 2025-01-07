@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation';
 import { useAuth } from '@/lib/auth/auth-context';
 import { Layout } from '@/components/Layout';
 import { Loader2 } from 'lucide-react';
-import { AUTH_ROUTES } from '@/lib/auth';
+import { AUTH_ROUTES } from '@/lib/constants';
 
 export default function HomePage() {
   const { user, isLoading } = useAuth();

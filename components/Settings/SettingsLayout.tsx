@@ -5,7 +5,7 @@ import {
   User, Bell, Shield, CreditCard, Building2, 
   Settings as SettingsIcon 
 } from "lucide-react";
-import { AUTH_ROUTES } from "@/lib/auth";
+import { AUTH_ROUTES } from "@/constants/auth";
 
 const settingsNavItems = [
   {

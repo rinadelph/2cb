@@ -1,27 +1,29 @@
 import { useEffect } from 'react'
-import { useAuth } from './useAuth'
-import { useRouter } from 'next/router'
-import { logger } from '@/lib/debug'
+import { useAuth } from '@/lib/auth/auth-context'
+import { useRouter } from 'next/navigation'
+import { authLogger } from '@/lib/auth/auth-logger'
 
 export function useSessionRecovery() {
-  const { recoverSession } = useAuth()
+  const { recoverSession, user } = useAuth()
   const router = useRouter()
 
   useEffect(() => {
     const recover = async () => {
-      try {
-        const session = await recoverSession()
-        if (session) {
-          logger.info('Session recovered automatically', {
-            userId: session.user.id
-          })
-          router.push('/dashboard')
-        }
-      } catch (err) {
-        logger.error('Error recovering session:', err)
+      const { error } = await recoverSession()
+
+      if (error) {
+        authLogger.error('Failed to recover session', { error })
+        return
+      }
+
+      if (user) {
+        authLogger.info('Session recovered automatically', {
+          userId: user.id
+        })
+        router.push('/dashboard')
       }
     }
 
     recover()
-  }, [])
+  }, [recoverSession, router, user])
 } 

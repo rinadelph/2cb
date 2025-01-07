@@ -5,7 +5,7 @@ import { useDropzone } from "react-dropzone";
 import Image from "next/image";
 import { X, Upload, Loader2 } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { supabase } from "@/lib/supabase-client";
+import { getSupabaseClient } from "@/lib/supabase-client";
 import { useToast } from "@/components/ui/use-toast";
 
 export interface ImageUploadProps {
@@ -35,7 +35,7 @@ export function ImageUpload({
           const fileName = `${Date.now()}-${Math.random().toString(36).substring(2)}.${fileExt}`;
           const filePath = `listings/${fileName}`;
 
-          const { error: uploadError, data } = await supabase.storage
+          const { error: uploadError, data } = await getSupabaseClient().storage
             .from('listings')
             .upload(filePath, file, {
               cacheControl: '3600',
@@ -44,7 +44,7 @@ export function ImageUpload({
 
           if (uploadError) throw uploadError;
 
-          const { data: { publicUrl } } = supabase.storage
+          const { data: { publicUrl } } = getSupabaseClient().storage
             .from('listings')
             .getPublicUrl(filePath);
 

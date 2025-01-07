@@ -9,12 +9,14 @@ interface ListingItemProps {
 }
 
 const ListingItem: React.FC<ListingItemProps> = ({ listing }) => {
-  const mainImage = listing.listing_images?.[0];
+  const mainImage = listing.images?.[0];
 
   return (
     <div className="border rounded-lg p-4 shadow-sm">
       <h2 className="text-xl font-semibold mb-2">{listing.title}</h2>
-      <p className="text-gray-600 mb-2">{listing.description.substring(0, 100)}...</p>
+      {listing.description && (
+        <p className="text-gray-600 mb-2">{listing.description.substring(0, 100)}...</p>
+      )}
       <p className="text-lg font-bold mb-4">${listing.price}</p>
       {mainImage && (
         <div className="relative w-full h-48 mb-4">

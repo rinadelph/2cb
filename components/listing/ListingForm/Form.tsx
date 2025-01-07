@@ -26,7 +26,7 @@ interface ListingFormProps {
   mode?: 'create' | 'edit';
 }
 
-export function ListingForm({
+export default function ListingForm({
   initialData,
   initialCommission,
   onCommissionSubmit,
@@ -35,7 +35,7 @@ export function ListingForm({
 }: ListingFormProps) {
   const router = useRouter();
   const { toast } = useToast();
-
+  
   const methods = useForm<ListingFormValues>({
     resolver: zodResolver(listingSchema),
     defaultValues: {
@@ -81,6 +81,7 @@ export function ListingForm({
       
       // Commission defaults
       commission_status: 'draft',
+      commission_visibility: 'private',
       
       // Optional fields
       meta_data: {},
@@ -109,7 +110,7 @@ export function ListingForm({
             amount: transformedData.commission_amount,
             type: transformedData.commission_type,
             status: transformedData.commission_status || 'draft',
-            visibility: 'private',
+            visibility: transformedData.commission_visibility || 'private',
             listing_id: listing.id,
           });
         }
@@ -154,7 +155,7 @@ export function ListingForm({
             type="submit"
             disabled={!methods.formState.isDirty || methods.formState.isSubmitting || !methods.formState.isValid}
           >
-            {methods.formState.isSubmitting ? 'Saving...' : mode === 'edit' ? 'Update Listing' : 'Create Listing'}
+            {methods.formState.isSubmitting ? 'Saving...' : 'Save Listing'}
           </Button>
         </div>
       </form>

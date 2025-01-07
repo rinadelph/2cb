@@ -1,6 +1,12 @@
-import { useFormContext } from "react-hook-form";
+'use client'
+
+import { useFormContext, UseFormReturn } from "react-hook-form";
 import { Checkbox } from "@/components/ui/checkbox";
-import { ListingBase } from "@/types/listing";
+import { ListingFormValues } from "@/schemas/listing";
+
+interface FeaturesProps {
+  methods?: UseFormReturn<ListingFormValues>;
+}
 
 const AVAILABLE_FEATURES = {
   pool: "Pool",
@@ -9,8 +15,7 @@ const AVAILABLE_FEATURES = {
   fireplace: "Fireplace",
   security_system: "Security System",
   central_ac: "Central AC",
-  // Add more as needed
-};
+} as const;
 
 const AVAILABLE_AMENITIES = {
   gym: "Gym",
@@ -19,11 +24,12 @@ const AVAILABLE_AMENITIES = {
   elevator: "Elevator",
   laundry: "Laundry",
   storage: "Storage",
-  // Add more as needed
-};
+} as const;
 
-export function Features() {
-  const { register, watch, setValue } = useFormContext<ListingBase>();
+export function Features({ methods }: FeaturesProps) {
+  const form = useFormContext<ListingFormValues>() || methods;
+  const { watch, setValue } = form;
+  
   const features = watch('features') || {};
   const amenities = watch('amenities') || {};
 

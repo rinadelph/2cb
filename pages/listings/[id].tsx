@@ -6,12 +6,12 @@ import { useListings } from '@/hooks/useListings';
 import { useToast } from '@/components/ui/use-toast';
 import { Button } from '@/components/ui/button';
 import { formatCurrency } from '@/lib/utils';
-import { supabase } from '@/lib/supabaseClient';
+import { getSupabaseClient } from '@/lib/supabaseClient';
 import { Listing } from '@/types/listing';
 
 const fetchListing = async (id: string): Promise<Listing | null> => {
   try {
-    const { data: listing, error } = await supabase
+    const { data: listing, error } = await getSupabaseClient()
       .from('listings')
       .select('*')
       .eq('id', id)

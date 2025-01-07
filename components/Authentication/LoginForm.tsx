@@ -12,7 +12,7 @@ import Link from 'next/link'
 import { useRouter } from 'next/router'
 import { Card, CardContent, CardFooter, CardHeader } from '@/components/ui/card'
 import { Loader2 } from 'lucide-react'
-import { AUTH_ROUTES } from '@/lib/auth'
+import { AUTH_ROUTES } from '@/lib/constants'
 
 export function LoginForm() {
   const { signIn } = useAuth()
@@ -75,7 +75,7 @@ export function LoginForm() {
           title: "Success",
           description: "Successfully signed in",
         })
-        router.push('/dashboard')
+        router.push(AUTH_ROUTES.dashboard)
       }
     } catch (err) {
       logger.error('Unexpected error in login form:', err)

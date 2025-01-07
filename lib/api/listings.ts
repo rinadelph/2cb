@@ -1,7 +1,13 @@
 import { supabase } from '../supabaseClient';
-import { ListingBase } from '@/types/listing';
+import { ListingFormValues } from '@/schemas/listing';
 
-export const createListing = async (data: Partial<ListingBase>) => {
+interface ListingBase extends ListingFormValues {
+  id: string;
+  created_at?: string;
+  updated_at?: string;
+}
+
+export const createListing = async (data: ListingFormValues) => {
   try {
     const { data: newListing, error } = await supabase
       .from('listings')
@@ -10,7 +16,6 @@ export const createListing = async (data: Partial<ListingBase>) => {
       .single();
 
     if (error) {
-      console.error('Supabase error:', error);
       throw new Error(`Failed to create listing: ${error.message}`);
     }
 
@@ -52,29 +57,23 @@ export async function getListingById(id: string) {
   }
 }
 
-export const updateListing = async (id: string, data: Partial<ListingBase>, userId?: string): Promise<ListingBase> => {
+export const updateListing = async (id: string, data: Partial<ListingFormValues>): Promise<ListingFormValues> => {
   try {
-    let query = supabase
+    const { data: updatedListing, error } = await supabase
       .from('listings')
       .update(data)
-      .eq('id', id);
-
-    // If userId is provided, add it to the query conditions
-    if (userId) {
-      query = query.eq('user_id', userId);
-    }
-
-    const { data: updatedListing, error } = await query.select().single();
+      .eq('id', id)
+      .select()
+      .single();
 
     if (error) {
-      console.error('Error updating listing:', error);
       throw error;
     }
 
     return updatedListing;
-  } catch (err) {
-    console.error("Error updating listing:", err);
-    throw err;
+  } catch (error) {
+    console.error('Error updating listing:', error);
+    throw error;
   }
 };
 

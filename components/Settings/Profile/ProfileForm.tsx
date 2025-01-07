@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
-import { supabase, logError, logInfo } from '../../../lib/supabaseClient';
+import { getSupabaseClient, logError, logInfo } from '../../../lib/supabaseClient';
 import { useAuth } from '../../../hooks/useAuth';
 
 const profileSchema = z.object({
@@ -54,6 +54,7 @@ const ProfileForm: React.FC<ProfileFormProps> = ({ initialData }) => {
     }
 
     try {
+      const supabase = getSupabaseClient();
       const { data: updatedProfile, error } = await supabase
         .from('profiles')
         .upsert({ id: initialData.id, ...data }, { onConflict: 'id' })

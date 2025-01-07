@@ -3,17 +3,17 @@
 import { useEffect } from 'react'
 import { useRouter } from 'next/router'
 import { useAuth } from '@/hooks/useAuth'
-import { AUTH_ROUTES } from "@/lib/auth";
+import { AUTH_ROUTES } from "@/constants/auth";
 
 export function AuthCallback() {
   const router = useRouter()
-  const { session } = useAuth()
+  const { user } = useAuth()
 
   useEffect(() => {
-    if (session) {
+    if (user) {
       router.push(AUTH_ROUTES.dashboard)
     }
-  }, [session, router])
+  }, [user, router])
 
   return (
     <div className="flex items-center justify-center min-h-screen">

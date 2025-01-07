@@ -1,4 +1,4 @@
-import { supabase } from "@/lib/supabase-client";
+import { getSupabaseClient } from "@/lib/supabase-client";
 import { ListingFormValues } from "@/lib/schemas/listing-schema";
 import { ListingBase, ListingImage } from "@/types/listing";
 import { 
@@ -172,7 +172,7 @@ const formatFormData = (data: ListingFormValues, userId: string) => {
 export async function getListing(id: string): Promise<ListingResponse> {
   try {
     // Get main listing data
-    const { data: listing, error: listingError } = await supabase
+    const { data: listing, error: listingError } = await getSupabaseClient()
       .from('listings')
       .select('*')
       .eq('id', id)
@@ -199,7 +199,7 @@ export async function updateListing(id: string, data: ListingFormValues, userId:
     const formattedData = formatFormData(data, userId);
 
     // Update main listing
-    const { data: listing, error: listingError } = await supabase
+    const { data: listing, error: listingError } = await getSupabaseClient()
       .from('listings')
       .update(formattedData)
       .eq('id', id)
@@ -221,7 +221,7 @@ export async function updateListing(id: string, data: ListingFormValues, userId:
 
 export const getTestListings = async (userId: string): Promise<ListingBase[]> => {
   try {
-    const { data, error } = await supabase
+    const { data, error } = await getSupabaseClient()
       .from('listings')
       .select('*')
       .eq('user_id', userId)
@@ -246,71 +246,18 @@ export async function createListing(data: ListingFormValues, userId: string): Pr
       throw new Error('User ID is required');
     }
 
-    // Convert numeric fields to strings for database storage
-    const formattedData = {
-      ...data,
-      user_id: userId,
-      price: data.price.toString(),
-      tax_amount: data.tax_amount?.toString(),
-      maintenance_fee: data.maintenance_fee?.toString(),
-      square_feet_living: data.square_feet_living?.toString(),
-      square_feet_total: data.square_feet_total?.toString(),
-      lot_size_sf: data.lot_size_sf?.toString(),
-      bedrooms: data.bedrooms?.toString(),
-      bathrooms_full: data.bathrooms_full?.toString(),
-      bathrooms_half: data.bathrooms_half?.toString(),
-      garage_spaces: data.garage_spaces?.toString(),
-      carport_spaces: data.carport_spaces?.toString(),
-    };
+    const formattedData = formatFormData(data, userId);
 
     // Create main listing
-    const { data: listing, error: listingError } = await supabase
+    const { data: listing, error: listingError } = await getSupabaseClient()
       .from('listings')
-      .insert([formattedData])
+      .insert(formattedData)
       .select()
       .single();
 
     if (listingError) throw listingError;
 
-    if (listing) {
-      // Create listing features
-      const { error: featuresError } = await supabase
-        .from('listing_features')
-        .insert([{
-          listing_id: listing.id,
-          construction_type: data.construction_type,
-          interior_features: data.interior_features,
-          exterior_features: data.exterior_features,
-          parking_description: data.parking_description,
-          lot_description: data.lot_description
-        }]);
-
-      if (featuresError) throw featuresError;
-
-      // Create listing images
-      if (data.images && data.images.length > 0) {
-        const imageInserts = data.images.map((url, index) => ({
-          listing_id: listing.id,
-          url,
-          position: index
-        }));
-
-        const { error: imagesError } = await supabase
-          .from('listing_images')
-          .insert(imageInserts);
-
-        if (imagesError) throw imagesError;
-      }
-    }
-
-    return { 
-      listing: {
-        ...listing,
-        price: Number(listing.price) || 0,
-        bedrooms: Number(listing.bedrooms) || 0,
-      } as ListingFormValues, 
-      error: null 
-    };
+    return { listing: formatListing(listing), error: null };
   } catch (error) {
     console.error('Error creating listing:', error);
     return {
@@ -398,7 +345,7 @@ export const createTestListing = async (userId: string) => {
   };
 
   try {
-    const { data: listing, error } = await supabase
+    const { data: listing, error } = await getSupabaseClient()
       .from('listings')
       .insert([testListing])
       .select()

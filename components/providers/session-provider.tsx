@@ -4,7 +4,7 @@ import { useSessionTimeout } from '@/hooks/useSessionTimeout'
 import { useEffect } from 'react'
 import { usePathname } from 'next/navigation'
 import { logger } from '@/lib/debug'
-import { PUBLIC_ROUTES, type PublicRoute } from '@/lib/auth'
+import { PUBLIC_ROUTES, type PublicRoute } from '@/lib/routes'
 
 export function SessionProvider({ children }: { children: React.ReactNode }) {
   useSessionTimeout()

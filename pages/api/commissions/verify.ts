@@ -1,5 +1,5 @@
 import { NextApiRequest, NextApiResponse } from 'next';
-import { supabase } from '@/lib/supabase-client';
+import { getSupabaseClient } from '@/lib/supabase-client';
 import { CommissionVerificationFormValues } from '@/lib/schemas/commission-schema';
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
@@ -14,6 +14,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     };
 
     // Create verification record
+    const supabase = getSupabaseClient();
     const { data: verification, error } = await supabase
       .from('commission_verifications')
       .insert([{

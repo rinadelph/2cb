@@ -1,5 +1,5 @@
 import { NextApiRequest, NextApiResponse } from 'next';
-import { supabase } from '@/lib/supabase-client';
+import { getSupabaseClient } from '@/lib/supabase-client';
 import { CommissionFormValues } from '@/lib/schemas/commission-schema';
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
@@ -14,7 +14,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     };
 
     // Create commission structure
-    const { data: commission, error } = await supabase
+    const { data: commission, error } = await getSupabaseClient()
       .from('commission_structures')
       .insert([{
         listing_id: data.listing_id,
@@ -31,7 +31,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     if (error) throw error;
 
     // Create commission history entry
-    const { error: historyError } = await supabase
+    const { error: historyError } = await getSupabaseClient()
       .from('commission_history')
       .insert([{
         commission_id: commission.id,

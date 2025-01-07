@@ -1,15 +1,18 @@
 export const AUTH_ROUTES = {
+  // Auth related routes
   login: '/auth/login',
   register: '/auth/register',
-  dashboard: '/dashboard',
-  resetPassword: '/reset-password',
   callback: '/auth/callback',
   verifyEmail: '/auth/verify-email',
-  settings: '/settings',
+  resetPassword: '/auth/reset-password',
+
+  // Main navigation routes
+  dashboard: '/dashboard',
   listings: '/listings',
   createListing: '/listings/create',
   manageListing: '/listings/manage',
   editListing: '/listings/edit',
+  settings: '/settings',
   analytics: '/analytics'
 } as const;
 

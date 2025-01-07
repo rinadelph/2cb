@@ -1,70 +1,80 @@
-import Image from "next/image";
-import Link from "next/link";
-import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Listing } from "@/types/listing";
-import { Badge } from "@/components/ui/badge";
+'use client'
+
+import React from 'react';
+import Link from 'next/link';
+import Image from 'next/image';
+import { Card, CardContent } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
+import { formatCurrency } from '@/lib/utils';
+import { Listing } from '@/types/listing';
+import { ListingStatusBadge } from '@/components/listing/ListingStatusBadge';
 
 interface ListingCardProps {
   listing: Listing;
+  href?: string;
 }
 
-export function ListingCard({ listing }: ListingCardProps) {
-  return (
-    <Card className="overflow-hidden">
-      <div className="relative h-48 w-full">
-        {listing.images?.[0] ? (
-          <Image
-            src={listing.images[0]}
-            alt={listing.title}
-            fill
-            className="object-cover"
-          />
-        ) : (
-          <div className="h-full w-full bg-muted flex items-center justify-center">
-            No image available
-          </div>
-        )}
-      </div>
-      
-      <CardHeader>
-        <div className="flex justify-between items-start gap-4">
-          <CardTitle className="line-clamp-2">{listing.title}</CardTitle>
-          <Badge variant={listing.status === 'active' ? 'default' : 'secondary'}>
-            {listing.status}
-          </Badge>
-        </div>
-      </CardHeader>
+export function ListingCard({ listing, href }: ListingCardProps) {
+  const featuredImage = listing.images?.find(img => img.is_featured) || listing.images?.[0];
 
-      <CardContent>
-        <div className="space-y-2">
-          <div className="text-lg font-bold">
-            ${listing.price?.toLocaleString()}
+  return (
+    <Link href={href || `/listings/${listing.id}`}>
+      <Card className="group overflow-hidden transition-all hover:border-primary">
+        <div className="relative aspect-video overflow-hidden">
+          {featuredImage ? (
+            <Image
+              src={featuredImage.url}
+              alt={listing.title}
+              fill
+              className="object-cover transition-transform group-hover:scale-105"
+              sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+            />
+          ) : (
+            <div className="h-full w-full bg-muted" />
+          )}
+          <div className="absolute right-2 top-2">
+            <ListingStatusBadge status={listing.status} />
+          </div>
+        </div>
+        <CardContent className="grid gap-2 p-4">
+          <div className="flex items-center justify-between gap-4">
+            <h3 className="font-semibold line-clamp-1">{listing.title}</h3>
+            <div className="text-right font-medium">
+              {formatCurrency(listing.price)}
+            </div>
           </div>
           <div className="text-sm text-muted-foreground">
-            {listing.address.street_number} {listing.address.street_name}
-            {listing.address.unit && `, Unit ${listing.address.unit}`}
+            {listing.address_street_number} {listing.address_street_name}
+            {listing.address_unit && `, Unit ${listing.address_unit}`}
           </div>
           <div className="text-sm text-muted-foreground">
-            {listing.address.city}, {listing.address.state} {listing.address.zip}
+            {listing.city}, {listing.state} {listing.zip_code}
           </div>
-          <div className="flex gap-4 text-sm">
-            <div>{listing.bedrooms} beds</div>
-            <div>{listing.bathrooms} baths</div>
+          <div className="flex flex-wrap gap-2">
+            {listing.property_type && (
+              <Badge variant="secondary" className="capitalize">
+                {listing.property_type.replace('_', ' ')}
+              </Badge>
+            )}
+            {listing.listing_type && (
+              <Badge variant="secondary" className="capitalize">
+                For {listing.listing_type}
+              </Badge>
+            )}
+          </div>
+          <div className="flex items-center gap-4 text-sm text-muted-foreground">
+            {listing.bedrooms && (
+              <div>{listing.bedrooms} {listing.bedrooms === 1 ? 'bed' : 'beds'}</div>
+            )}
+            {listing.bathrooms && (
+              <div>{listing.bathrooms} {listing.bathrooms === 1 ? 'bath' : 'baths'}</div>
+            )}
             {listing.square_feet && (
               <div>{listing.square_feet.toLocaleString()} sqft</div>
             )}
           </div>
-        </div>
-      </CardContent>
-
-      <CardFooter>
-        <Button asChild className="w-full">
-          <Link href={`/listings/${listing.id}`}>
-            View Details
-          </Link>
-        </Button>
-      </CardFooter>
-    </Card>
+        </CardContent>
+      </Card>
+    </Link>
   );
 }
