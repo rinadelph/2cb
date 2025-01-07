@@ -26,11 +26,11 @@ export function toFormValues(listing: ListingBase): Partial<ListingFormValues> {
     location: {
       type: 'Point',
       coordinates: [
-        listing.location?.coordinates?.[0] || listing.longitude || 0,
-        listing.location?.coordinates?.[1] || listing.latitude || 0
+        listing.location?.coordinates?.[0] || 0,
+        listing.location?.coordinates?.[1] || 0
       ],
-      lat: listing.location?.lat || listing.latitude || 0,
-      lng: listing.location?.lng || listing.longitude || 0
+      lat: listing.location?.lat || 0,
+      lng: listing.location?.lng || 0
     },
     
     // Property details
@@ -45,7 +45,6 @@ export function toFormValues(listing: ListingBase): Partial<ListingFormValues> {
     features: listing.features || {},
     amenities: listing.amenities || {},
     images: listing.images || [],
-    documents: listing.documents || [],
     meta_data: listing.meta_data || {},
     
     // Commission fields (defaults)
@@ -69,13 +68,14 @@ export function toDatabaseModel(formData: ListingFormValues, userId: string): Pa
   return {
     ...listingData,
     user_id: userId,
-    latitude: formData.location.lat,
-    longitude: formData.location.lng,
     location: {
       type: 'Point',
-      coordinates: [formData.location.lng, formData.location.lat],
-      lat: formData.location.lat,
-      lng: formData.location.lng
+      coordinates: [
+        formData.location?.coordinates?.[0] || 0,
+        formData.location?.coordinates?.[1] || 0
+      ],
+      lat: formData.location?.lat || 0,
+      lng: formData.location?.lng || 0
     }
   };
 }
@@ -86,6 +86,38 @@ export function toCommissionModel(formData: ListingFormValues, listingId: string
     amount: formData.commission_amount || 1,
     type: (formData.commission_type || 'percentage') as CommissionType,
     visibility: (formData.commission_visibility || 'private') as CommissionVisibility,
-    verification_required: false,
+    status: formData.commission_status || 'draft'
+  };
+}
+
+export function transformListingToDatabase(listing: ListingBase) {
+  const { location, ...rest } = listing;
+  return {
+    ...rest,
+    location: {
+      type: 'Point',
+      coordinates: [
+        location?.coordinates?.[0] || 0,
+        location?.coordinates?.[1] || 0
+      ],
+      lat: location?.lat || 0,
+      lng: location?.lng || 0
+    }
+  };
+}
+
+export function transformDatabaseToListing(listing: any): ListingBase {
+  const { location, ...rest } = listing;
+  return {
+    ...rest,
+    location: {
+      type: 'Point',
+      coordinates: [
+        location?.coordinates?.[0] || 0,
+        location?.coordinates?.[1] || 0
+      ],
+      lat: location?.lat || 0,
+      lng: location?.lng || 0
+    }
   };
 } 

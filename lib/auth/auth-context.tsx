@@ -25,6 +25,7 @@ interface AuthContextType {
   revokeSession: (sessionId: string) => Promise<{ error: Error | null }>;
   recoverSession: () => Promise<{ error: Error | null }>;
   refreshSession: () => Promise<{ error: Error | null }>;
+  updateProfile: (data: { [key: string]: any }) => Promise<{ error: Error | null }>;
 }
 
 const AuthContext = createContext<AuthContextType>({
@@ -38,7 +39,8 @@ const AuthContext = createContext<AuthContextType>({
   getActiveSessions: async () => [],
   revokeSession: async () => ({ error: null }),
   recoverSession: async () => ({ error: null }),
-  refreshSession: async () => ({ error: null })
+  refreshSession: async () => ({ error: null }),
+  updateProfile: async () => ({ error: null })
 });
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
@@ -199,6 +201,23 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   };
 
+  const updateProfile = async (data: { [key: string]: any }) => {
+    try {
+      if (!user) throw new Error('No user logged in');
+
+      const { error } = await supabase.auth.updateUser({
+        data
+      });
+
+      if (error) throw error;
+
+      return { error: null };
+    } catch (error) {
+      console.error('Error updating profile:', error);
+      return { error: error as Error };
+    }
+  };
+
   return (
     <AuthContext.Provider value={{
       user,
@@ -211,7 +230,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       getActiveSessions,
       revokeSession,
       recoverSession,
-      refreshSession
+      refreshSession,
+      updateProfile
     }}>
       {children}
     </AuthContext.Provider>

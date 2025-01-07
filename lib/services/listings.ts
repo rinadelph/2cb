@@ -1,6 +1,6 @@
 import { getSupabaseClient } from "@/lib/supabase-client";
 import { ListingFormValues } from "@/lib/schemas/listing-schema";
-import { ListingBase, ListingImage } from "@/types/listing";
+import { ListingBase } from "@/types/listing";
 import { 
   ListingStatus, 
   PropertyType, 
@@ -38,7 +38,6 @@ const formatListing = (listing: any): ListingBase => ({
   user_id: listing.user_id,
   organization_id: listing.organization_id,
   title: listing.title,
-  slug: listing.slug || '',
   description: listing.description || '',
   status: mapStatus(listing.status),
   property_type: listing.property_type,
@@ -55,12 +54,20 @@ const formatListing = (listing: any): ListingBase => ({
   country: listing.country || 'US',
 
   // Location fields
-  latitude: listing.latitude ? Number(listing.latitude) : undefined,
-  longitude: listing.longitude ? Number(listing.longitude) : undefined,
   location: listing.location?.type === 'Point' ? {
+    type: 'Point',
+    coordinates: [
+      listing.location.coordinates[0],
+      listing.location.coordinates[1]
+    ],
     lat: listing.location.coordinates[1],
     lng: listing.location.coordinates[0]
-  } : undefined,
+  } : {
+    type: 'Point',
+    coordinates: [0, 0],
+    lat: 0,
+    lng: 0
+  },
 
   // Property details
   square_feet: listing.square_feet ? Number(listing.square_feet) : undefined,
@@ -94,17 +101,10 @@ const formatListing = (listing: any): ListingBase => ({
   commission_terms: listing.commission_terms,
   commission_status: listing.commission_status || 'draft',
   commission_visibility: listing.commission_visibility || 'private',
-  commission_signature_data: listing.commission_signature_data,
-  commission_signed_at: listing.commission_signed_at,
-  commission_signed_by: listing.commission_signed_by,
-  commission_locked_at: listing.commission_locked_at,
-  commission_locked_by: listing.commission_locked_by,
 
   // Timestamps
   created_at: listing.created_at,
-  updated_at: listing.updated_at,
-  published_at: listing.published_at,
-  expires_at: listing.expires_at
+  updated_at: listing.updated_at
 });
 
 const formatFormData = (data: ListingFormValues, userId: string) => {
@@ -292,9 +292,6 @@ export const createTestListing = async (userId: string) => {
     country: 'US',
 
     // Location fields
-    latitude: 25.7617,
-    longitude: -80.1918,
-    // GeoJSON Point format
     location: {
       type: 'Point',
       coordinates: [-80.1918, 25.7617] // [longitude, latitude]
@@ -337,11 +334,10 @@ export const createTestListing = async (userId: string) => {
     commission_terms: 'Standard 3% commission with 50/50 split',
     commission_status: 'draft' as CommissionStatus,
     commission_visibility: 'private' as CommissionVisibility,
-    commission_signature_data: null,
-    commission_signed_at: null,
-    commission_signed_by: null,
-    commission_locked_at: null,
-    commission_locked_by: null
+
+    // Timestamps
+    created_at: new Date().toISOString(),
+    updated_at: new Date().toISOString()
   };
 
   try {
@@ -358,4 +354,18 @@ export const createTestListing = async (userId: string) => {
     console.error('Error creating test listing:', error);
     return { listing: null, error };
   }
-}; 
+};
+
+export function transformListingData(data: any): ListingBase {
+  const { lat, lng, ...rest } = data;
+  
+  return {
+    ...rest,
+    location: {
+      type: 'Point',
+      coordinates: [lng || 0, lat || 0],
+      lat: lat || 0,
+      lng: lng || 0
+    }
+  };
+} 

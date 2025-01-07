@@ -1,9 +1,11 @@
 import { useRouter } from 'next/router';
 import { useListings } from '../../../hooks/useListings';
 import { useAuth } from '../../../hooks/useAuth';
-import ListingForm from '../../../components/ListingForm';
+import { ListingForm } from '@/components/listing/ListingForm';
 import { useToast } from '@/components/ui/use-toast';
 import { useEffect, useState } from 'react';
+import { Button } from '@/components/ui/button';
+import { CommissionStructure } from '@/types/commission';
 
 export default function EditListingPage() {
   const router = useRouter();
@@ -65,13 +67,45 @@ export default function EditListingPage() {
     router.push(`/listings/${id}`);
   };
 
+  const handleCommissionSubmit = async (data: CommissionStructure) => {
+    try {
+      const response = await fetch('/api/commissions', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ ...data, listing_id: id }),
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to update commission structure');
+      }
+
+      toast({
+        title: "Success",
+        description: "Commission structure updated successfully",
+      });
+    } catch (error) {
+      console.error('Error updating commission structure:', error);
+      toast({
+        title: "Error",
+        description: "Failed to update commission structure",
+        variant: "destructive"
+      });
+    }
+  };
+
   console.log('EditListingPage - Rendering form');
   return (
     <div className="container mx-auto px-4 py-8">
-      <h1 className="text-3xl font-bold mb-8">Edit Listing</h1>
+      <div className="flex justify-between items-center mb-8">
+        <h1 className="text-3xl font-bold">Edit Listing</h1>
+        <Button variant="outline" onClick={handleCancel}>Cancel</Button>
+      </div>
       <ListingForm 
-        initialData={listing} 
-        onCancel={handleCancel} 
+        initialData={listing}
+        mode="edit"
+        onCommissionSubmit={handleCommissionSubmit}
       />
     </div>
   );

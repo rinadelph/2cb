@@ -1,12 +1,22 @@
 import { ListingFormValues } from '@/schemas/listing';
 
+export interface Address {
+  street_number: string;
+  street_name: string;
+  unit?: string;
+  city: string;
+  state: string;
+  zip: string;
+}
+
 export interface ListingBase extends ListingFormValues {
   id: string;
   user_id?: string;
   organization_id?: string;
   created_at?: string;
   updated_at?: string;
-  location: {
+  address?: Address;
+  location?: {
     type: 'Point';
     coordinates: [number, number];
     lat: number;
@@ -24,7 +34,7 @@ export interface ListingBase extends ListingFormValues {
     is_featured: boolean;
     position: number;
   }>;
-  documents: Array<{
+  documents?: Array<{
     id: string;
     name: string;
     url: string;

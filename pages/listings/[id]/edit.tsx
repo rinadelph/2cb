@@ -71,7 +71,7 @@ export default function EditListingPage() {
       const dbData = toDatabaseModel(dataWithUserId, user.id);
       
       // Update the listing
-      const updatedListing = await updateListing(id as string, dbData, user.id);
+      const updatedListing = await updateListing(id as string, dbData);
 
       toast({
         title: 'Success',

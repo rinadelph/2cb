@@ -104,11 +104,11 @@ const ListingDetailPage: NextPage = () => {
               <h2 className="text-xl font-semibold mb-4">Location</h2>
               <div className="space-y-2">
                 <p>
-                  {listing.address.street_number} {listing.address.street_name}
-                  {listing.address.unit && `, Unit ${listing.address.unit}`}
+                  {listing.address_street_number} {listing.address_street_name}
+                  {listing.address_unit && `, Unit ${listing.address_unit}`}
                 </p>
                 <p>
-                  {listing.address.city}, {listing.address.state} {listing.address.zip}
+                  {listing.city}, {listing.state} {listing.zip_code}
                 </p>
               </div>
             </div>
@@ -119,28 +119,32 @@ const ListingDetailPage: NextPage = () => {
             <p className="whitespace-pre-wrap">{listing.description}</p>
           </div>
 
-          {listing.features && listing.features.length > 0 && (
+          {listing.features && Object.keys(listing.features).length > 0 && (
             <div className="mt-8">
               <h2 className="text-xl font-semibold mb-4">Features</h2>
               <ul className="grid grid-cols-2 md:grid-cols-3 gap-4">
-                {listing.features.map((feature: string) => (
-                  <li key={feature} className="flex items-center">
-                    <span className="capitalize">{feature.replace('_', ' ')}</span>
-                  </li>
-                ))}
+                {Object.entries(listing.features)
+                  .filter(([_, enabled]) => enabled)
+                  .map(([feature]) => (
+                    <li key={feature} className="flex items-center">
+                      <span className="capitalize">{feature.replace('_', ' ')}</span>
+                    </li>
+                  ))}
               </ul>
             </div>
           )}
 
-          {listing.amenities && listing.amenities.length > 0 && (
+          {listing.amenities && Object.keys(listing.amenities).length > 0 && (
             <div className="mt-8">
               <h2 className="text-xl font-semibold mb-4">Amenities</h2>
               <ul className="grid grid-cols-2 md:grid-cols-3 gap-4">
-                {listing.amenities.map((amenity: string) => (
-                  <li key={amenity} className="flex items-center">
-                    <span className="capitalize">{amenity.replace('_', ' ')}</span>
-                  </li>
-                ))}
+                {Object.entries(listing.amenities)
+                  .filter(([_, enabled]) => enabled)
+                  .map(([amenity]) => (
+                    <li key={amenity} className="flex items-center">
+                      <span className="capitalize">{amenity.replace('_', ' ')}</span>
+                    </li>
+                  ))}
               </ul>
             </div>
           )}

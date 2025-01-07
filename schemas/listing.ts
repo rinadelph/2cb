@@ -2,6 +2,7 @@ import { z } from 'zod';
 
 export const listingSchema = z.object({
   id: z.string().optional(),
+  user_id: z.string().optional(),
   title: z.string().min(1, "Title is required"),
   description: z.string(),
   status: z.enum(['draft', 'pending', 'active', 'inactive', 'expired', 'sold']),

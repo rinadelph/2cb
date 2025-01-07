@@ -5,7 +5,7 @@ import { useRouter } from "next/router";
 import { useAuth } from "@/lib/auth/auth-context";
 import { useToast } from "@/components/ui/use-toast";
 import { ListingForm } from '@/components/listing/ListingForm';
-import { ListingBase } from '@/types/listing';
+import { ListingFormValues } from '@/schemas/listing';
 import { CommissionStructure } from '@/types/commission';
 import { Button } from '@/components/ui/button';
 import { createTestListing } from '@/lib/services/listings';
@@ -15,7 +15,7 @@ const CreateListingPage: NextPage = () => {
   const router = useRouter();
   const { toast } = useToast();
 
-  const handleSubmit = async (data: ListingBase) => {
+  const handleSubmit = async (data: ListingFormValues) => {
     if (!user?.id) {
       toast({
         title: "Error",

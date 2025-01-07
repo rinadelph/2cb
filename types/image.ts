@@ -7,6 +7,7 @@ export interface ListingImage {
   type: string;
   is_featured: boolean;
   position: number;
+  meta_data?: Record<string, unknown>;
 }
 
 export interface ListingDocument {
