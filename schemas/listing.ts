@@ -31,10 +31,15 @@ export const listingSchema = z.object({
   // Location fields
   location: z.object({
     type: z.literal('Point'),
-    coordinates: z.tuple([z.number(), z.number()]),
-    lat: z.number(),
-    lng: z.number()
-  }).optional(),
+    coordinates: z.tuple([z.number(), z.number()]).default([0, 0]),
+    lat: z.number().default(0),
+    lng: z.number().default(0)
+  }).default({
+    type: 'Point',
+    coordinates: [0, 0],
+    lat: 0,
+    lng: 0
+  }),
   
   // Features and amenities
   features: z.record(z.boolean()).default({}),

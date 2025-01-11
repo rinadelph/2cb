@@ -38,15 +38,13 @@ export default function ListingForm({
   
   const methods = useForm<ListingFormValues>({
     resolver: zodResolver(listingSchema),
-    defaultValues: {
+    defaultValues: initialData || {
       title: '',
       description: '',
       status: 'draft',
       property_type: 'single_family',
       listing_type: 'sale',
       price: 0,
-      
-      // Address fields
       address_street_number: '',
       address_street_name: '',
       address_unit: '',
@@ -54,8 +52,6 @@ export default function ListingForm({
       state: '',
       zip_code: '',
       country: 'US',
-      
-      // Property details
       square_feet: undefined,
       bedrooms: undefined,
       bathrooms: undefined,
@@ -63,35 +59,36 @@ export default function ListingForm({
       lot_size: undefined,
       parking_spaces: undefined,
       stories: undefined,
-      
-      // Location
       location: {
         type: 'Point',
         coordinates: [0, 0],
         lat: 0,
         lng: 0
       },
-      
-      // Features and amenities
       features: {},
       amenities: {},
-      
-      // Media
       images: [],
-      
-      // Commission defaults
       commission_status: 'draft',
       commission_visibility: 'private',
-      
-      // Optional fields
       meta_data: {},
-      
-      ...initialData,
     },
+    mode: 'onChange',
   });
+
+  // Debug form state
+  React.useEffect(() => {
+    console.log('Form State:', {
+      isDirty: methods.formState.isDirty,
+      isValid: methods.formState.isValid,
+      errors: methods.formState.errors,
+      values: methods.getValues(),
+    });
+  }, [methods.formState]);
 
   const handleSubmit = async (formData: ListingFormValues) => {
     try {
+      console.log('Submitting form data:', formData);
+      
       const transformedData = {
         ...formData,
         images: formData.images.map((img, index) => ({
@@ -149,13 +146,27 @@ export default function ListingForm({
           initialData={initialCommission}
         />
 
+        {/* Debug Info */}
+        {process.env.NODE_ENV === 'development' && (
+          <div className="text-sm text-gray-500 mb-4">
+            <p>Form State: {JSON.stringify({
+              isDirty: methods.formState.isDirty,
+              isValid: methods.formState.isValid,
+              isSubmitting: methods.formState.isSubmitting,
+            }, null, 2)}</p>
+            {Object.keys(methods.formState.errors).length > 0 && (
+              <p>Errors: {JSON.stringify(methods.formState.errors, null, 2)}</p>
+            )}
+          </div>
+        )}
+
         {/* Form Actions */}
         <div className="flex justify-end space-x-4">
           <Button
             type="submit"
-            disabled={!methods.formState.isDirty || methods.formState.isSubmitting || !methods.formState.isValid}
+            disabled={methods.formState.isSubmitting}
           >
-            {methods.formState.isSubmitting ? 'Saving...' : 'Save Listing'}
+            {methods.formState.isSubmitting ? 'Saving...' : mode === 'edit' ? 'Update Listing' : 'Create Listing'}
           </Button>
         </div>
       </form>

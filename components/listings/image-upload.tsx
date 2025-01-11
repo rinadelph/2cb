@@ -28,38 +28,83 @@ export function ImageUpload({
     try {
       setIsUploading(true);
       const newUrls: string[] = [];
+      console.log('[ImageUpload] Starting upload for files:', acceptedFiles.map(f => ({ name: f.name, size: f.size, type: f.type })));
+
+      const supabase = getSupabaseClient();
 
       for (const file of acceptedFiles) {
         try {
-          const fileExt = file.name.split('.').pop();
-          const fileName = `${Date.now()}-${Math.random().toString(36).substring(2)}.${fileExt}`;
-          const filePath = `listings/${fileName}`;
+          // Ensure we only use supported extensions
+          const fileExt = file.name.split('.').pop()?.toLowerCase() || '';
+          if (!['jpg', 'jpeg', 'png', 'gif'].includes(fileExt)) {
+            throw new Error('Unsupported file type. Please use JPG, PNG, or GIF images.');
+          }
 
-          const { error: uploadError, data } = await getSupabaseClient().storage
+          // Create a clean filename
+          const timestamp = Date.now();
+          const randomId = Math.random().toString(36).substring(2, 10);
+          const cleanFileName = `${timestamp}-${randomId}.${fileExt}`;
+
+          console.log('[ImageUpload] Processing file:', {
+            originalName: file.name,
+            newName: cleanFileName,
+            size: file.size,
+            type: file.type
+          });
+
+          // Upload the file
+          const { error: uploadError, data } = await supabase.storage
             .from('listings')
-            .upload(filePath, file, {
+            .upload(cleanFileName, file, {
               cacheControl: '3600',
-              upsert: false
+              upsert: true // Changed to true to handle potential duplicates
             });
 
-          if (uploadError) throw uploadError;
+          if (uploadError) {
+            console.error('[ImageUpload] Upload error:', {
+              error: uploadError,
+              file: cleanFileName,
+              message: uploadError.message
+            });
+            throw new Error(`Upload failed: ${uploadError.message}`);
+          }
 
-          const { data: { publicUrl } } = getSupabaseClient().storage
+          console.log('[ImageUpload] Upload successful:', {
+            data,
+            file: cleanFileName
+          });
+
+          // Get the public URL
+          const { data: { publicUrl } } = supabase.storage
             .from('listings')
-            .getPublicUrl(filePath);
+            .getPublicUrl(cleanFileName);
+
+          console.log('[ImageUpload] Public URL generated:', {
+            url: publicUrl,
+            file: cleanFileName
+          });
 
           newUrls.push(publicUrl);
         } catch (error) {
-          console.error('Error uploading file:', file.name, error);
+          console.error('[ImageUpload] Error processing file:', {
+            file: file.name,
+            error: error instanceof Error ? {
+              message: error.message,
+              stack: error.stack,
+              name: error.name
+            } : error
+          });
+          
           toast({
             title: "Upload Failed",
-            description: `Failed to upload ${file.name}`,
+            description: error instanceof Error ? error.message : 'Failed to upload image',
             variant: "destructive"
           });
         }
       }
 
       if (newUrls.length > 0) {
+        console.log('[ImageUpload] Successfully uploaded files:', newUrls);
         onChange([...value, ...newUrls]);
         toast({
           title: "Success",
@@ -67,10 +112,16 @@ export function ImageUpload({
         });
       }
     } catch (error) {
-      console.error('Error uploading images:', error);
+      console.error('[ImageUpload] Fatal error during upload:', {
+        error: error instanceof Error ? {
+          message: error.message,
+          stack: error.stack,
+          name: error.name
+        } : error
+      });
       toast({
         title: "Error",
-        description: "Failed to upload images. Please try again.",
+        description: error instanceof Error ? error.message : "Failed to upload images. Please try again.",
         variant: "destructive"
       });
     } finally {

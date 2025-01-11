@@ -6,26 +6,19 @@ import { useToast } from '@/components/ui/use-toast';
 import { useEffect, useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { CommissionStructure } from '@/types/commission';
+import type { ListingFormValues } from '@/schemas/listing';
 
 export default function EditListingPage() {
   const router = useRouter();
   const { id } = router.query;
-  const { listing, isLoading, error } = useListings(id as string);
+  const { listing, isLoading, error, updateListing } = useListings(id as string);
   const { user } = useAuth();
   const { toast } = useToast();
   const [isAuthorized, setIsAuthorized] = useState<boolean | null>(null);
 
   useEffect(() => {
-    console.log('EditListingPage useEffect - User ID:', user?.id);
-    console.log('EditListingPage useEffect - Listing ID:', id);
-    console.log('EditListingPage useEffect - Listing:', listing);
-
     if (listing && user) {
-      console.log('Listing user_id:', listing.user_id);
-      console.log('Current user_id:', user.id);
-      
       if (listing.user_id !== user.id) {
-        console.log('User not authorized to edit this listing');
         setIsAuthorized(false);
         toast({
           title: "Error",
@@ -34,37 +27,41 @@ export default function EditListingPage() {
         });
         router.push(`/listings/${id}`);
       } else {
-        console.log('User authorized to edit this listing');
         setIsAuthorized(true);
       }
-    } else {
-      console.log('Listing or user not available yet');
     }
   }, [listing, user, id, router, toast]);
 
-  if (isLoading) {
-    console.log('EditListingPage - Loading');
-    return <div>Loading...</div>;
-  }
-  if (error) {
-    console.error('Error in EditListingPage:', error);
-    return <div>Error: {error instanceof Error ? error.message : 'An unknown error occurred'}</div>;
-  }
-  if (!listing) {
-    console.log('EditListingPage - Listing not found');
-    return <div>Listing not found</div>;
-  }
-  if (isAuthorized === null) {
-    console.log('EditListingPage - Checking authorization');
-    return <div>Checking authorization...</div>;
-  }
-  if (isAuthorized === false) {
-    console.log('EditListingPage - User not authorized, redirecting');
-    return null; // This will prevent any flicker before redirect
-  }
+  const handleSubmit = async (data: ListingFormValues) => {
+    if (!user?.id || !id) {
+      toast({
+        title: "Error",
+        description: "You must be logged in to update a listing",
+        variant: "destructive",
+      });
+      return;
+    }
 
-  const handleCancel = () => {
-    router.push(`/listings/${id}`);
+    try {
+      await updateListing({
+        id: id as string,
+        ...data,
+      });
+
+      toast({
+        title: "Success",
+        description: "Listing updated successfully",
+      });
+
+      router.push(`/listings/${id}`);
+    } catch (error) {
+      console.error('Error updating listing:', error);
+      toast({
+        title: "Error",
+        description: error instanceof Error ? error.message : "Failed to update listing",
+        variant: "destructive",
+      });
+    }
   };
 
   const handleCommissionSubmit = async (data: CommissionStructure) => {
@@ -90,22 +87,28 @@ export default function EditListingPage() {
       toast({
         title: "Error",
         description: "Failed to update commission structure",
-        variant: "destructive"
+        variant: "destructive",
       });
     }
   };
 
-  console.log('EditListingPage - Rendering form');
+  if (isLoading) return <div>Loading...</div>;
+  if (error) return <div>Error: {error instanceof Error ? error.message : 'An unknown error occurred'}</div>;
+  if (!listing) return <div>Listing not found</div>;
+  if (isAuthorized === null) return <div>Checking authorization...</div>;
+  if (isAuthorized === false) return null;
+
   return (
     <div className="container mx-auto px-4 py-8">
       <div className="flex justify-between items-center mb-8">
         <h1 className="text-3xl font-bold">Edit Listing</h1>
-        <Button variant="outline" onClick={handleCancel}>Cancel</Button>
+        <Button variant="outline" onClick={() => router.push(`/listings/${id}`)}>Cancel</Button>
       </div>
       <ListingForm 
         initialData={listing}
-        mode="edit"
+        onSubmit={handleSubmit}
         onCommissionSubmit={handleCommissionSubmit}
+        mode="edit"
       />
     </div>
   );

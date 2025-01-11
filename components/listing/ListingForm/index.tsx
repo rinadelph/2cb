@@ -24,6 +24,7 @@ interface ListingFormProps {
   onCommissionSubmit: (data: CommissionStructure) => Promise<void>;
   onSubmit?: (data: ListingFormValues) => Promise<void>;
   mode?: 'create' | 'edit';
+  isSubmitting?: boolean;
 }
 
 export function ListingForm({
@@ -32,9 +33,17 @@ export function ListingForm({
   onCommissionSubmit,
   onSubmit,
   mode = 'create',
+  isSubmitting = false,
 }: ListingFormProps) {
   const router = useRouter();
   const { toast } = useToast();
+
+  const defaultLocation = {
+    type: 'Point' as const,
+    coordinates: [0, 0],
+    lat: 0,
+    lng: 0
+  };
 
   const methods = useForm<ListingFormValues>({
     resolver: zodResolver(listingSchema),
@@ -45,8 +54,6 @@ export function ListingForm({
       property_type: 'single_family',
       listing_type: 'sale',
       price: 0,
-      
-      // Address fields
       address_street_number: '',
       address_street_name: '',
       address_unit: '',
@@ -54,8 +61,6 @@ export function ListingForm({
       state: '',
       zip_code: '',
       country: 'US',
-      
-      // Property details
       square_feet: undefined,
       bedrooms: undefined,
       bathrooms: undefined,
@@ -63,33 +68,41 @@ export function ListingForm({
       lot_size: undefined,
       parking_spaces: undefined,
       stories: undefined,
-      
-      // Location
-      location: {
-        type: 'Point',
-        coordinates: [0, 0],
-        lat: 0,
-        lng: 0
-      },
-      
-      // Features and amenities
+      location: defaultLocation,
       features: {},
       amenities: {},
-      
-      // Media
       images: [],
-      
-      // Commission defaults
       commission_status: 'draft',
-      
-      // Optional fields
       meta_data: {},
-      
       ...initialData,
+      location: initialData?.location || defaultLocation,
     },
+    mode: 'onChange',
   });
 
+  // Debug logging for form state
+  React.useEffect(() => {
+    console.log('[ListingForm] Form State:', {
+      isDirty: methods.formState.isDirty,
+      isSubmitting: methods.formState.isSubmitting,
+      isValid: methods.formState.isValid,
+      errors: methods.formState.errors,
+      dirtyFields: Object.keys(methods.formState.dirtyFields),
+      touchedFields: Object.keys(methods.formState.touchedFields),
+    });
+  }, [methods.formState]);
+
+  // Force form to be dirty in edit mode since we're editing existing data
+  React.useEffect(() => {
+    if (mode === 'edit' && initialData) {
+      Object.keys(initialData).forEach(field => {
+        methods.trigger(field as keyof ListingFormValues);
+      });
+    }
+  }, [mode, initialData, methods]);
+
   const handleSubmit = async (formData: ListingFormValues) => {
+    console.log('[ListingForm] Attempting submit with data:', formData);
     try {
       const transformedData = {
         ...formData,
@@ -97,7 +110,10 @@ export function ListingForm({
           ...img,
           position: img.position ?? index,
         })),
+        location: formData.location || defaultLocation,
       };
+
+      console.log('[ListingForm] Transformed data:', transformedData);
 
       if (mode === 'edit' && onSubmit) {
         await onSubmit(transformedData);
@@ -122,7 +138,7 @@ export function ListingForm({
         router.push(`${AUTH_ROUTES.listings}/${listing.id}`);
       }
     } catch (error) {
-      console.error('Form Submission Error:', error);
+      console.error('[ListingForm] Form Submission Error:', error);
       toast({
         title: "Error",
         description: error instanceof Error ? error.message : "Failed to save listing",
@@ -152,7 +168,15 @@ export function ListingForm({
         <div className="flex justify-end space-x-4">
           <Button
             type="submit"
-            disabled={!methods.formState.isDirty || methods.formState.isSubmitting || !methods.formState.isValid}
+            disabled={methods.formState.isSubmitting || !methods.formState.isValid}
+            onClick={() => {
+              console.log('[ListingForm] Button clicked, form state:', {
+                isDirty: methods.formState.isDirty,
+                isSubmitting: methods.formState.isSubmitting,
+                isValid: methods.formState.isValid,
+                errors: methods.formState.errors
+              });
+            }}
           >
             {methods.formState.isSubmitting ? 'Saving...' : mode === 'edit' ? 'Update Listing' : 'Create Listing'}
           </Button>
