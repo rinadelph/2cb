@@ -17,7 +17,7 @@ export async function uploadListingImage(
   file: FormidableFile,
   listingId: string,
   supabase: SupabaseClient
-): Promise<{ path: string; id: string }> {
+): Promise<{ path: string; id: string; url: string; size: number; type: string }> {
   console.log('[uploadListingImage] Starting upload for listing:', listingId);
 
   try {
@@ -41,6 +41,12 @@ export async function uploadListingImage(
       });
 
     if (uploadError) throw uploadError;
+
+    // Get public URL
+    const { data: { publicUrl } } = supabase
+      .storage
+      .from(STORAGE_BUCKET)
+      .getPublicUrl(fileName);
 
     // Get the current highest display order
     const { data: currentImages, error: queryError } = await supabase
@@ -73,6 +79,9 @@ export async function uploadListingImage(
     return {
       path: fileName,
       id: record.id,
+      url: publicUrl,
+      size: file.size,
+      type: file.mimetype
     };
   } catch (error) {
     console.error('[uploadListingImage] Error uploading image:', error);
@@ -102,9 +111,10 @@ export async function deleteListingImage(
 }
 
 export async function getImageDimensions(
-  filePath: string
+  file: string | FormidableFile
 ): Promise<{ width: number; height: number }> {
   try {
+    const filePath = typeof file === 'string' ? file : file.filepath;
     const metadata = await sharp(filePath).metadata();
     return {
       width: metadata.width || 0,

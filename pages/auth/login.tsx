@@ -2,7 +2,6 @@
 
 import { LoginForm } from '@/components/Authentication/LoginForm'
 import { motion } from 'framer-motion'
-import { AUTH_ROUTES } from '@/lib/routes'
 
 export default function Login() {
   return (

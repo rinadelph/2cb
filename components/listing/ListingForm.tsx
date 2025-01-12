@@ -1,93 +1,101 @@
 'use client';
 
+import React, { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { Form } from '@/components/ui/form';
-import { FormField, FormItem, FormLabel, FormControl, FormDescription, FormMessage } from '@/components/ui/form';
+import { Button } from '@/components/ui/button';
+import { listingSchema, ListingFormValues } from '@/schemas/listing';
+import { CommissionStructure } from '@/types/commission';
+import { BasicInfo } from './ListingForm/BasicInfo';
+import { LocationInfo } from './ListingForm/LocationInfo';
+import { Features } from './ListingForm/Features';
+import { Images } from './ListingForm/Images';
+import { Commission } from './ListingForm/Commission';
+import { useToast } from '@/components/ui/use-toast';
+import { FormProvider } from 'react-hook-form';
+import { PropertyDetails } from './ListingForm/PropertyDetails';
+import { createListing } from '@/lib/services/listings';
+import { useRouter } from 'next/router';
+import { 
+  Form,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormControl,
+  FormMessage 
+} from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { 
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue 
+} from '@/components/ui/select';
 import { Label } from '@/components/ui/label';
 import { ImageUpload } from '@/components/listings/image-upload';
-import { ListingFormValues, listingSchema } from '@/schemas/listing';
-import { CommissionStructure } from '@/types/commission';
-import { useState } from 'react';
 
-export interface ListingFormProps {
+interface ListingFormProps {
   initialData?: ListingFormValues;
-  onSubmit: (data: ListingFormValues) => Promise<void>;
-  onCommissionSubmit?: (data: CommissionStructure) => Promise<void>;
+  initialCommission?: CommissionStructure;
+  onSubmit?: (data: ListingFormValues) => Promise<void>;
   mode?: 'create' | 'edit';
-  onImageUpload?: () => Promise<void>;
 }
 
-export function ListingForm({
-  initialData,
-  onSubmit,
-  onCommissionSubmit,
-  mode = 'create',
-  onImageUpload,
-}: ListingFormProps) {
-  const [images, setImages] = useState<string[]>([]);
-  
-  const form = useForm<ListingFormValues>({
+export function ListingForm({ initialData, initialCommission, onSubmit, mode = 'create' }: ListingFormProps) {
+  const { toast } = useToast();
+  const router = useRouter();
+  const methods = useForm<ListingFormValues>({
     resolver: zodResolver(listingSchema),
-    defaultValues: initialData || {
-      title: '',
-      description: '',
-      status: 'draft',
-      property_type: 'single_family',
-      listing_type: 'sale',
-      price: 0,
-      square_feet: undefined,
-      bedrooms: undefined,
-      bathrooms: undefined,
-      year_built: undefined,
-      lot_size: undefined,
-      parking_spaces: undefined,
-      stories: undefined,
-      address_street_number: '',
-      address_street_name: '',
-      address_unit: undefined,
-      city: '',
-      state: '',
-      zip_code: '',
-      country: 'US',
-      features: {},
-      amenities: {},
-      meta_data: {},
-      commission_status: 'draft',
-      commission_type: undefined,
-      commission_amount: undefined,
-      commission_terms: undefined,
-      commission_visibility: undefined,
-    }
+    defaultValues: initialData,
   });
 
-  const handleImageUploadSuccess = async () => {
-    if (onImageUpload) {
-      await onImageUpload();
+  const handleSubmit = async (formData: ListingFormValues) => {
+    try {
+      console.log('Submitting form data:', formData);
+      
+      const transformedData = {
+        ...formData,
+        images: formData.images.map((img: { position?: number }, index: number) => ({
+          ...img,
+          position: img.position ?? index,
+        })),
+      };
+
+      if (mode === 'edit' && onSubmit) {
+        await onSubmit(transformedData);
+        toast({
+          title: 'Success',
+          description: 'Listing updated successfully'
+        });
+      } else {
+        const { listing } = await createListing(transformedData);
+        toast({
+          title: 'Success',
+          description: 'Listing created successfully'
+        });
+        router.push(`/listings/${listing.id}`);
+      }
+    } catch (error) {
+      console.error('Error submitting form:', error);
+      toast({
+        title: 'Error',
+        description: error instanceof Error ? error.message : 'Failed to submit form',
+        variant: 'destructive'
+      });
     }
-  };
-
-  const handleImageChange = (newImages: string[]) => {
-    setImages(newImages);
-    handleImageUploadSuccess();
-  };
-
-  const handleImageRemove = (imageUrl: string) => {
-    setImages(prev => prev.filter(url => url !== imageUrl));
   };
 
   return (
-    <Form {...form}>
-      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
+    <Form {...methods}>
+      <form onSubmit={methods.handleSubmit(handleSubmit)} className="space-y-8">
         {/* Basic Information */}
         <div className="space-y-4">
           <h2 className="text-lg font-semibold">Basic Information</h2>
           
           <FormField
-            control={form.control}
+            control={methods.control}
             name="title"
             render={({ field }) => (
               <FormItem>
@@ -101,7 +109,7 @@ export function ListingForm({
           />
 
           <FormField
-            control={form.control}
+            control={methods.control}
             name="description"
             render={({ field }) => (
               <FormItem>
@@ -116,7 +124,7 @@ export function ListingForm({
 
           <div className="grid grid-cols-2 gap-4">
             <FormField
-              control={form.control}
+              control={methods.control}
               name="status"
               render={({ field }) => (
                 <FormItem>
@@ -142,7 +150,7 @@ export function ListingForm({
             />
 
             <FormField
-              control={form.control}
+              control={methods.control}
               name="property_type"
               render={({ field }) => (
                 <FormItem>
@@ -171,7 +179,7 @@ export function ListingForm({
 
           <div className="grid grid-cols-2 gap-4">
             <FormField
-              control={form.control}
+              control={methods.control}
               name="listing_type"
               render={({ field }) => (
                 <FormItem>
@@ -195,7 +203,7 @@ export function ListingForm({
             />
 
             <FormField
-              control={form.control}
+              control={methods.control}
               name="price"
               render={({ field }) => (
                 <FormItem>
@@ -216,7 +224,7 @@ export function ListingForm({
           
           <div className="grid grid-cols-3 gap-4">
             <FormField
-              control={form.control}
+              control={methods.control}
               name="square_feet"
               render={({ field }) => (
                 <FormItem>
@@ -230,7 +238,7 @@ export function ListingForm({
             />
 
             <FormField
-              control={form.control}
+              control={methods.control}
               name="bedrooms"
               render={({ field }) => (
                 <FormItem>
@@ -244,7 +252,7 @@ export function ListingForm({
             />
 
             <FormField
-              control={form.control}
+              control={methods.control}
               name="bathrooms"
               render={({ field }) => (
                 <FormItem>
@@ -260,7 +268,7 @@ export function ListingForm({
 
           <div className="grid grid-cols-3 gap-4">
             <FormField
-              control={form.control}
+              control={methods.control}
               name="year_built"
               render={({ field }) => (
                 <FormItem>
@@ -274,7 +282,7 @@ export function ListingForm({
             />
 
             <FormField
-              control={form.control}
+              control={methods.control}
               name="lot_size"
               render={({ field }) => (
                 <FormItem>
@@ -288,7 +296,7 @@ export function ListingForm({
             />
 
             <FormField
-              control={form.control}
+              control={methods.control}
               name="parking_spaces"
               render={({ field }) => (
                 <FormItem>
@@ -303,7 +311,7 @@ export function ListingForm({
           </div>
 
           <FormField
-            control={form.control}
+            control={methods.control}
             name="stories"
             render={({ field }) => (
               <FormItem>
@@ -323,7 +331,7 @@ export function ListingForm({
           
           <div className="grid grid-cols-2 gap-4">
             <FormField
-              control={form.control}
+              control={methods.control}
               name="address_street_number"
               render={({ field }) => (
                 <FormItem>
@@ -337,7 +345,7 @@ export function ListingForm({
             />
 
             <FormField
-              control={form.control}
+              control={methods.control}
               name="address_street_name"
               render={({ field }) => (
                 <FormItem>
@@ -352,7 +360,7 @@ export function ListingForm({
           </div>
 
           <FormField
-            control={form.control}
+            control={methods.control}
             name="address_unit"
             render={({ field }) => (
               <FormItem>
@@ -367,7 +375,7 @@ export function ListingForm({
 
           <div className="grid grid-cols-3 gap-4">
             <FormField
-              control={form.control}
+              control={methods.control}
               name="city"
               render={({ field }) => (
                 <FormItem>
@@ -381,7 +389,7 @@ export function ListingForm({
             />
 
             <FormField
-              control={form.control}
+              control={methods.control}
               name="state"
               render={({ field }) => (
                 <FormItem>
@@ -395,7 +403,7 @@ export function ListingForm({
             />
 
             <FormField
-              control={form.control}
+              control={methods.control}
               name="zip_code"
               render={({ field }) => (
                 <FormItem>
@@ -416,7 +424,7 @@ export function ListingForm({
           
           <div className="grid grid-cols-2 gap-4">
             <FormField
-              control={form.control}
+              control={methods.control}
               name="commission_type"
               render={({ field }) => (
                 <FormItem>
@@ -430,7 +438,7 @@ export function ListingForm({
             />
 
             <FormField
-              control={form.control}
+              control={methods.control}
               name="commission_amount"
               render={({ field }) => (
                 <FormItem>
@@ -445,7 +453,7 @@ export function ListingForm({
           </div>
 
           <FormField
-            control={form.control}
+            control={methods.control}
             name="commission_terms"
             render={({ field }) => (
               <FormItem>
@@ -459,7 +467,7 @@ export function ListingForm({
           />
 
           <FormField
-            control={form.control}
+            control={methods.control}
             name="commission_visibility"
             render={({ field }) => (
               <FormItem>
@@ -479,9 +487,9 @@ export function ListingForm({
             <Label className="text-lg font-semibold">Images</Label>
           </div>
           <ImageUpload
-            value={images}
-            onChange={handleImageChange}
-            onRemove={handleImageRemove}
+            value={methods.getValues('images')}
+            onChange={value => methods.setValue('images', value)}
+            onRemove={value => methods.setValue('images', methods.getValues('images').filter(img => img !== value))}
             listingId={initialData?.id || ''}
             className="mb-4"
           />

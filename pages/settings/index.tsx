@@ -4,9 +4,6 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Switch } from "@/components/ui/switch";
-import { Separator } from "@/components/ui/separator";
-import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { useAuth } from "@/lib/auth/auth-context";
 import { useToast } from "@/components/ui/use-toast";
 import { useState } from "react";
@@ -16,7 +13,7 @@ import {
 } from "lucide-react";
 
 export default function SettingsPage() {
-  const { user } = useAuth();
+  const { data: session, _error } = useAuth();
   const { toast } = useToast();
   const [isLoading, setIsLoading] = useState(false);
 
@@ -91,7 +88,7 @@ export default function SettingsPage() {
                   </div>
                   <div className="space-y-2">
                     <Label htmlFor="email">Email</Label>
-                    <Input id="email" type="email" value={user?.email} disabled />
+                    <Input id="email" type="email" value={session?.email} disabled />
                   </div>
                   <div className="space-y-2">
                     <Label htmlFor="phone">Phone</Label>

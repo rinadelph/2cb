@@ -128,7 +128,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       }
     ];
 
-    numericValidations.forEach(({ field, value, minValue, maxValue, name, required }) => {
+    numericValidations.forEach(({ field: _field, value, minValue, maxValue, name, required }) => {
       const error = validateNumericField(value, name, minValue, maxValue, required);
       if (error) validationErrors.push(error);
     });
@@ -206,17 +206,17 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     }
 
     return res.status(200).json(listing);
-  } catch (error: any) {
+  } catch (error) {
     console.error('API error:', {
       error,
-      stack: error.stack,
-      message: error.message,
+      stack: error instanceof Error ? error.stack : undefined,
+      message: error instanceof Error ? error.message : 'Unknown error',
       timestamp: new Date().toISOString()
     });
     
     return res.status(500).json({ 
       message: 'Internal server error',
-      details: error.message
+      details: error instanceof Error ? error.message : 'Unknown error'
     });
   }
 } 

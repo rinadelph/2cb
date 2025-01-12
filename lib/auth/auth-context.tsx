@@ -1,6 +1,6 @@
 import { createContext, useContext, useEffect, useState } from 'react'
 import { supabase } from '@/lib/supabase-client'
-import { User, Session } from '@supabase/supabase-js'
+import { User, Session, UserAttributes } from '@supabase/supabase-js'
 import { useRouter } from 'next/navigation'
 import { AUTH_ROUTES } from '@/lib/constants'
 
@@ -11,6 +11,13 @@ export interface SessionInfo {
   user_agent?: string;
   ip_address?: string;
   current: boolean;
+}
+
+interface ProfileData {
+  email?: string;
+  phone?: string;
+  password?: string;
+  data?: Record<string, string | number | boolean | null | undefined>;
 }
 
 interface AuthContextType {
@@ -25,7 +32,7 @@ interface AuthContextType {
   revokeSession: (sessionId: string) => Promise<{ error: Error | null }>;
   recoverSession: () => Promise<{ error: Error | null }>;
   refreshSession: () => Promise<{ error: Error | null }>;
-  updateProfile: (data: { [key: string]: any }) => Promise<{ error: Error | null }>;
+  updateProfile: (data: ProfileData) => Promise<{ error: Error | null }>;
 }
 
 const AuthContext = createContext<AuthContextType>({
@@ -201,7 +208,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   };
 
-  const updateProfile = async (data: { [key: string]: any }) => {
+  const updateProfile = async (data: ProfileData) => {
     try {
       if (!user) throw new Error('No user logged in');
 

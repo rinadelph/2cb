@@ -1,6 +1,6 @@
 'use client'
 
-import React from 'react';
+import React, { useState } from 'react';
 import { UseFormReturn } from 'react-hook-form';
 import { ListingFormValues } from '@/schemas/listing';
 import { Label } from '@/components/ui/label';
@@ -10,73 +10,42 @@ import { useListingImages } from '@/hooks/useListingImages';
 import { toast } from '@/components/ui/use-toast';
 
 interface ImagesProps {
-  methods: UseFormReturn<ListingFormValues>;
+  _methods: UseFormReturn<ListingFormValues>;
   listingId?: string;
 }
 
-export function Images({ methods, listingId }: ImagesProps) {
+export function Images({ _methods, listingId }: ImagesProps) {
+  const {
+    images = [],
+    isLoading: _isLoading = false,
+    deleteImage = async () => {},
+    reorderImages = async () => {},
+    refreshImages = async () => {}
+  } = useListingImages({ listingId: listingId || '' });
+
+  const [_refreshImages, setRefreshImages] = useState(false);
+
   if (!listingId) {
     return null; // Don't show image management until we have a listing ID
   }
 
-  const {
-    images,
-    isLoading,
-    deleteImage,
-    reorderImages,
-    refreshImages
-  } = useListingImages({ listingId });
-
-  const handleImageChange = async (newUrls: string[]) => {
-    try {
-      await refreshImages();
-      toast({
-        title: 'Success',
-        description: 'Images updated successfully'
-      });
-    } catch (error) {
-      console.error('Error updating images:', error);
-      toast({
-        title: 'Error',
-        description: 'Failed to update images',
-        variant: 'destructive'
-      });
-    }
+  const handleChange = (value: string[]) => {
+    // This will be handled by the refreshImages call after upload
+    console.log('Images changed:', value);
   };
 
-  const handleImageRemove = async (url: string) => {
+  const handleDelete = async (id: string) => {
     try {
-      // Find the image with this URL and delete it
-      const imageToDelete = images.find(img => img.url === url);
-      if (imageToDelete) {
-        await deleteImage(imageToDelete.id);
-        toast({
-          title: 'Success',
-          description: 'Image deleted successfully'
-        });
-      }
-    } catch (error) {
-      console.error('Error deleting image:', error);
-      toast({
-        title: 'Error',
-        description: 'Failed to delete image',
-        variant: 'destructive'
-      });
-    }
-  };
-
-  const handleDelete = async (imageId: string) => {
-    try {
-      await deleteImage(imageId);
+      await deleteImage(id);
       toast({
         title: 'Success',
-        description: 'Image deleted successfully'
+        description: 'Image removed successfully'
       });
     } catch (error) {
-      console.error('Error deleting image:', error);
+      console.error('Error removing image:', error);
       toast({
         title: 'Error',
-        description: 'Failed to delete image',
+        description: 'Failed to remove image',
         variant: 'destructive'
       });
     }
@@ -84,7 +53,18 @@ export function Images({ methods, listingId }: ImagesProps) {
 
   const handleReorder = async (startIndex: number, endIndex: number) => {
     try {
-      await reorderImages(startIndex, endIndex);
+      // Create new array with reordered images
+      const newImages = [...images];
+      const [movedImage] = newImages.splice(startIndex, 1);
+      newImages.splice(endIndex, 0, movedImage);
+      
+      // Update display_order based on new positions
+      const reorderedImages = newImages.map((img, index) => ({
+        ...img,
+        display_order: index
+      }));
+
+      await reorderImages(reorderedImages);
       toast({
         title: 'Success',
         description: 'Images reordered successfully'
@@ -101,26 +81,21 @@ export function Images({ methods, listingId }: ImagesProps) {
 
   return (
     <div className="space-y-4">
-      <div>
-        <Label>Images</Label>
-        <p className="text-sm text-muted-foreground mb-4">
-          Upload images of your property. Drag to reorder images. The first image will be the featured image.
-        </p>
-        <ImageUpload
-          value={images.map(img => img.url)}
-          onChange={handleImageChange}
-          onRemove={handleImageRemove}
-          listingId={listingId}
-          className="mb-4"
-        />
-      </div>
-
-      <ImageGrid
-        images={images}
-        isLoading={isLoading}
-        onDelete={handleDelete}
-        onReorder={handleReorder}
+      <Label>Listing Images</Label>
+      <ImageUpload
+        value={images.map(img => img.url)}
+        onChange={handleChange}
+        onRemove={handleDelete}
+        listingId={listingId}
       />
+      {images.length > 0 && (
+        <ImageGrid
+          images={images}
+          onDelete={handleDelete}
+          onReorder={handleReorder}
+          isLoading={_isLoading}
+        />
+      )}
     </div>
   );
 } 

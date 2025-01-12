@@ -5,7 +5,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { ListingFormValues } from "@/schemas/listing";
 
 interface FeaturesProps {
-  methods?: UseFormReturn<ListingFormValues>;
+  _methods?: UseFormReturn<ListingFormValues>;
 }
 
 const AVAILABLE_FEATURES = {
@@ -26,8 +26,8 @@ const AVAILABLE_AMENITIES = {
   storage: "Storage",
 } as const;
 
-export function Features({ methods }: FeaturesProps) {
-  const form = useFormContext<ListingFormValues>() || methods;
+export function Features({ _methods }: FeaturesProps) {
+  const form = useFormContext<ListingFormValues>() || _methods;
   const { watch, setValue } = form;
   
   const features = watch('features') || {};
