@@ -14,20 +14,21 @@ interface FormidableFile extends File {
 
 const STORAGE_BUCKET = 'listing-images';
 
-export async function uploadListingImage(file: FormidableFile, userId: string, supabase: SupabaseClient) {
+export async function uploadListingImage(file: FormidableFile, listingId: string, supabase: SupabaseClient) {
   console.log('[Storage Debug] Starting upload with:', {
-    userId,
+    listingId,
     bucket: STORAGE_BUCKET
   });
 
   try {
     // Create a unique file path
     const fileExt = file.originalFilename?.split('.').pop() || 'jpg';
-    const fileName = `${userId}/${uuidv4()}.${fileExt}`;
+    const imageId = uuidv4();
+    const fileName = `${listingId}/${imageId}.${fileExt}`;
     
     console.log('[Storage Debug] Generated file path:', {
       fileName,
-      userId,
+      listingId,
       fullPath: `${STORAGE_BUCKET}/${fileName}`
     });
     
@@ -36,7 +37,6 @@ export async function uploadListingImage(file: FormidableFile, userId: string, s
     console.log('[Storage Debug] Auth state before upload:', {
       hasSession: !!session,
       sessionUserId: session?.user?.id,
-      matchesUserId: session?.user?.id === userId,
       accessToken: session?.access_token?.slice(0, 10) + '...'
     });
     
@@ -50,7 +50,7 @@ export async function uploadListingImage(file: FormidableFile, userId: string, s
       fileName,
       contentType: file.mimetype,
       size: fileContent.length,
-      userId,
+      listingId,
       sessionUserId: session?.user?.id
     });
     
@@ -69,7 +69,7 @@ export async function uploadListingImage(file: FormidableFile, userId: string, s
         error,
         bucket: STORAGE_BUCKET,
         fileName,
-        userId,
+        listingId,
         sessionUserId: session?.user?.id,
         hasSession: !!session
       });

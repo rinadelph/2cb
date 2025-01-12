@@ -11,9 +11,10 @@ import { ListingImage } from '@/types/image';
 
 interface ImagesProps {
   methods: UseFormReturn<ListingFormValues>;
+  listingId?: string;
 }
 
-export function Images({ methods }: ImagesProps) {
+export function Images({ methods, listingId }: ImagesProps) {
   const { watch, setValue } = methods;
   const images = useMemo(() => watch('images') || [], [watch]);
 
@@ -84,6 +85,7 @@ export function Images({ methods }: ImagesProps) {
           value={imageUrls}
           onChange={handleImageChange}
           onRemove={handleImageRemove}
+          listingId={listingId || 'temp'}
         />
       </div>
 

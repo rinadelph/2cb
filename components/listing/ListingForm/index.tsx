@@ -156,7 +156,7 @@ export function ListingForm({
         </div>
         <PropertyDetails />
         <Features />
-        <Images methods={methods} />
+        <Images methods={methods} listingId={initialData?.id} />
         <Commission
           listingId={methods.watch('id')}
           listingPrice={methods.watch('price') || 0}
