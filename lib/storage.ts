@@ -1,117 +1,117 @@
-import { getSupabaseClient } from './supabase-client';
-import { v4 as uuidv4 } from 'uuid';
-import { File } from 'formidable';
-import fs from 'fs/promises';
 import { SupabaseClient } from '@supabase/supabase-js';
+import { File } from 'formidable';
+import { v4 as uuidv4 } from 'uuid';
+import sharp from 'sharp';
 
-interface FormidableFile extends File {
+export const STORAGE_BUCKET = 'listing-images';
+
+export interface FormidableFile extends File {
+  filepath: string;
   originalFilename: string;
   newFilename: string;
-  filepath: string;
   mimetype: string;
   size: number;
 }
 
-const STORAGE_BUCKET = 'listing-images';
-
-export async function uploadListingImage(file: FormidableFile, listingId: string, supabase: SupabaseClient) {
-  console.log('[Storage Debug] Starting upload with:', {
-    listingId,
-    bucket: STORAGE_BUCKET
-  });
+export async function uploadListingImage(
+  file: FormidableFile,
+  listingId: string,
+  supabase: SupabaseClient
+): Promise<{ path: string; id: string }> {
+  console.log('[uploadListingImage] Starting upload for listing:', listingId);
 
   try {
-    // Create a unique file path
+    // Read file content
+    const fileContent = await sharp(file.filepath)
+      .resize(1920, 1080, { fit: 'inside', withoutEnlargement: true })
+      .toBuffer();
+
+    // Generate unique file name
     const fileExt = file.originalFilename?.split('.').pop() || 'jpg';
     const imageId = uuidv4();
     const fileName = `${listingId}/${imageId}.${fileExt}`;
-    
-    console.log('[Storage Debug] Generated file path:', {
-      fileName,
-      listingId,
-      fullPath: `${STORAGE_BUCKET}/${fileName}`
-    });
-    
-    // Verify auth state before upload
-    const { data: { session } } = await supabase.auth.getSession();
-    console.log('[Storage Debug] Auth state before upload:', {
-      hasSession: !!session,
-      sessionUserId: session?.user?.id,
-      accessToken: session?.access_token?.slice(0, 10) + '...'
-    });
-    
-    console.log('Reading file from:', file.filepath);
-    
-    // Read the file content
-    const fileContent = await fs.readFile(file.filepath);
-    
-    console.log('Uploading file to Supabase:', {
-      bucket: STORAGE_BUCKET,
-      fileName,
-      contentType: file.mimetype,
-      size: fileContent.length,
-      listingId,
-      sessionUserId: session?.user?.id
-    });
-    
-    // Create a storage-specific client with the session token
-    const storageClient = supabase.storage.from(STORAGE_BUCKET);
-    
-    // Upload the file
-    const { data, error } = await storageClient.upload(fileName, fileContent, {
-      contentType: file.mimetype || 'image/jpeg',
-      cacheControl: '3600',
-      upsert: false
-    });
 
-    if (error) {
-      console.error('Supabase storage error:', {
-        error,
-        bucket: STORAGE_BUCKET,
-        fileName,
-        listingId,
-        sessionUserId: session?.user?.id,
-        hasSession: !!session
+    // Upload to storage
+    const { error: uploadError } = await supabase
+      .storage
+      .from(STORAGE_BUCKET)
+      .upload(fileName, fileContent, {
+        contentType: file.mimetype,
+        upsert: false,
       });
-      throw error;
-    }
 
-    // Get the public URL
-    const { data: { publicUrl } } = storageClient.getPublicUrl(fileName);
+    if (uploadError) throw uploadError;
 
-    // Clean up the temporary file
-    await fs.unlink(file.filepath).catch(console.error);
+    // Get the current highest display order
+    const { data: currentImages, error: queryError } = await supabase
+      .from('listing_images')
+      .select('display_order')
+      .eq('listing_id', listingId)
+      .order('display_order', { ascending: false })
+      .limit(1);
+
+    if (queryError) throw queryError;
+
+    const nextDisplayOrder = currentImages?.[0]?.display_order + 1 || 0;
+
+    // Create database record
+    const { data: record, error: dbError } = await supabase
+      .from('listing_images')
+      .insert({
+        id: imageId,
+        listing_id: listingId,
+        image_path: fileName,
+        display_order: nextDisplayOrder,
+      })
+      .select()
+      .single();
+
+    if (dbError) throw dbError;
+
+    console.log('[uploadListingImage] Successfully uploaded image:', fileName);
 
     return {
-      path: data.path,
-      url: publicUrl,
-      size: file.size,
-      type: file.mimetype || 'image/jpeg'
+      path: fileName,
+      id: record.id,
     };
   } catch (error) {
-    // Clean up the temporary file in case of error
-    await fs.unlink(file.filepath).catch(console.error);
+    console.error('[uploadListingImage] Error uploading image:', error);
     throw error;
   }
 }
 
-export async function deleteListingImage(path: string) {
-  const supabase = getSupabaseClient();
-  
-  const { error } = await supabase.storage
-    .from(STORAGE_BUCKET)
-    .remove([path]);
+export async function deleteListingImage(
+  imagePath: string,
+  supabase: SupabaseClient
+): Promise<void> {
+  console.log('[deleteListingImage] Deleting image:', imagePath);
 
-  if (error) {
-    console.error('Error deleting file:', error);
+  try {
+    const { error: storageError } = await supabase
+      .storage
+      .from(STORAGE_BUCKET)
+      .remove([imagePath]);
+
+    if (storageError) throw storageError;
+
+    console.log('[deleteListingImage] Successfully deleted image from storage');
+  } catch (error) {
+    console.error('[deleteListingImage] Error deleting image:', error);
     throw error;
   }
 }
 
-export async function getImageDimensions(file: FormidableFile): Promise<{ width: number; height: number }> {
-  // For now, return default dimensions since we can't easily get real dimensions on the server
-  return {
-    width: 800,  // Default width
-    height: 600  // Default height
-  };
+export async function getImageDimensions(
+  filePath: string
+): Promise<{ width: number; height: number }> {
+  try {
+    const metadata = await sharp(filePath).metadata();
+    return {
+      width: metadata.width || 0,
+      height: metadata.height || 0,
+    };
+  } catch (error) {
+    console.error('[getImageDimensions] Error getting image dimensions:', error);
+    throw error;
+  }
 } 

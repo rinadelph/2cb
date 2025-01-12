@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { MapPin, ChevronLeft, ChevronRight, Expand, Bed, Bath, Square, Car, DollarSign, Droplets, Waves, Anchor, Sofa, ArrowLeft, Edit } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -8,6 +8,9 @@ import { formatCurrency } from '@/lib/utils';
 import { Listing } from '@/types/listing';
 import { GetServerSideProps } from 'next';
 import { useRouter } from 'next/router';
+import { getSupabaseClient } from '@/lib/supabase-client';
+import Image from 'next/image';
+import { useAuth } from '@/lib/auth/auth-context';
 
 interface ListingDetailProps {
   listing: Listing | null;
@@ -16,9 +19,54 @@ interface ListingDetailProps {
 
 export default function ListingDetail({ listing, error }: ListingDetailProps) {
   const router = useRouter();
+  const { user } = useAuth();
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
   const [showImageModal, setShowImageModal] = useState(false);
   const [showCommissionModal, setShowCommissionModal] = useState(false);
+  const [images, setImages] = useState<{ url: string }[]>([]);
+  const [isLoadingImages, setIsLoadingImages] = useState(true);
+
+  useEffect(() => {
+    async function fetchImages() {
+      if (!listing?.id) return;
+
+      try {
+        setIsLoadingImages(true);
+        const supabase = getSupabaseClient();
+
+        // List all files in the listing's folder
+        const { data: files, error } = await supabase.storage
+          .from('listing-images')
+          .list(listing.id);
+
+        if (error) {
+          console.error('[ListingDetail] Error fetching images:', error);
+          return;
+        }
+
+        console.log('[ListingDetail] Found images:', files);
+
+        // Get public URLs for all images
+        const imageUrls = await Promise.all(
+          files.map(async (file) => {
+            const { data: { publicUrl } } = supabase.storage
+              .from('listing-images')
+              .getPublicUrl(`${listing.id}/${file.name}`);
+            return { url: publicUrl };
+          })
+        );
+
+        console.log('[ListingDetail] Image URLs:', imageUrls);
+        setImages(imageUrls);
+      } catch (error) {
+        console.error('[ListingDetail] Error processing images:', error);
+      } finally {
+        setIsLoadingImages(false);
+      }
+    }
+
+    fetchImages();
+  }, [listing?.id]);
 
   if (error) {
     return (
@@ -53,6 +101,14 @@ export default function ListingDetail({ listing, error }: ListingDetailProps) {
     }
   };
 
+  const nextImage = () => {
+    setCurrentImageIndex((prev) => (prev + 1) % images.length);
+  };
+
+  const previousImage = () => {
+    setCurrentImageIndex((prev) => (prev - 1 + images.length) % images.length);
+  };
+
   return (
     <div className="container mx-auto px-4 py-8">
       <div className="max-w-7xl mx-auto space-y-8">
@@ -66,14 +122,16 @@ export default function ListingDetail({ listing, error }: ListingDetailProps) {
             <ArrowLeft className="h-4 w-4" />
             Back to Listings
           </Button>
-          <Button
-            variant="outline"
-            className="flex items-center gap-2"
-            onClick={() => router.push(`/listings/${listing.id}/edit`)}
-          >
-            <Edit className="h-4 w-4" />
-            Edit Listing
-          </Button>
+          {user && listing && user.id === listing.user_id && (
+            <Button
+              variant="outline"
+              className="flex items-center gap-2"
+              onClick={() => router.push(`/listings/${listing.id}/edit`)}
+            >
+              <Edit className="h-4 w-4" />
+              Edit Listing
+            </Button>
+          )}
         </div>
 
         {/* Header section */}
@@ -97,7 +155,7 @@ export default function ListingDetail({ listing, error }: ListingDetailProps) {
             </div>
           </div>
           <div className="text-right">
-            <p className="text-4xl font-bold text-gray-900">{formatCurrency(listing.price)}</p>
+            <p className="text-4xl font-bold text-white">{formatCurrency(listing.price)}</p>
             {listing.square_feet && (
               <p className="text-lg text-gray-600 mt-1">
                 {formatCurrency(Math.round(listing.price / listing.square_feet))} / sqft
@@ -107,36 +165,45 @@ export default function ListingDetail({ listing, error }: ListingDetailProps) {
         </div>
 
         {/* Image carousel */}
-        {listing.images && listing.images.length > 0 ? (
+        {isLoadingImages ? (
+          <Card className="relative overflow-hidden group aspect-video bg-gray-100 flex items-center justify-center">
+            <div className="animate-pulse">Loading images...</div>
+          </Card>
+        ) : images.length > 0 ? (
           <Card className="relative overflow-hidden group aspect-video">
-            <img
-              src={listing.images[currentImageIndex].url}
-              alt={`Property image ${currentImageIndex + 1}`}
-              className="w-full h-full object-cover"
-            />
-            {listing.images.length > 1 && (
-              <div className="absolute inset-0 flex items-center justify-between p-4">
-                <Button
-                  variant="outline"
-                  size="icon"
-                  className="bg-white/80 hover:bg-white opacity-0 group-hover:opacity-100 transition-opacity"
-                  onClick={() => setCurrentImageIndex((prev) => 
-                    (prev - 1 + listing.images.length) % listing.images.length
-                  )}
-                >
-                  <ChevronLeft className="h-4 w-4" />
-                </Button>
-                <Button
-                  variant="outline"
-                  size="icon"
-                  className="bg-white/80 hover:bg-white opacity-0 group-hover:opacity-100 transition-opacity"
-                  onClick={() => setCurrentImageIndex((prev) => 
-                    (prev + 1) % listing.images.length
-                  )}
-                >
-                  <ChevronRight className="h-4 w-4" />
-                </Button>
-              </div>
+            <div className="relative w-full h-full">
+              <Image
+                src={images[currentImageIndex].url}
+                alt={`Property image ${currentImageIndex + 1}`}
+                fill
+                className="object-cover"
+                sizes="(max-width: 768px) 100vw, (max-width: 1200px) 80vw, 70vw"
+                priority={currentImageIndex === 0}
+              />
+            </div>
+            {images.length > 1 && (
+              <>
+                <div className="absolute inset-y-0 left-0 flex items-center">
+                  <Button
+                    variant="outline"
+                    size="icon"
+                    className="ml-4 bg-white/80 hover:bg-white opacity-0 group-hover:opacity-100 transition-opacity"
+                    onClick={previousImage}
+                  >
+                    <ChevronLeft className="h-4 w-4" />
+                  </Button>
+                </div>
+                <div className="absolute inset-y-0 right-0 flex items-center">
+                  <Button
+                    variant="outline"
+                    size="icon"
+                    className="mr-4 bg-white/80 hover:bg-white opacity-0 group-hover:opacity-100 transition-opacity"
+                    onClick={nextImage}
+                  >
+                    <ChevronRight className="h-4 w-4" />
+                  </Button>
+                </div>
+              </>
             )}
             <Button
               variant="outline"
@@ -146,6 +213,9 @@ export default function ListingDetail({ listing, error }: ListingDetailProps) {
             >
               <Expand className="h-4 w-4" />
             </Button>
+            <div className="absolute bottom-4 right-4 bg-black/50 text-white px-2 py-1 rounded text-sm">
+              {currentImageIndex + 1} / {images.length}
+            </div>
           </Card>
         ) : (
           <Card className="relative overflow-hidden group aspect-video bg-gray-100 flex items-center justify-center">
@@ -232,13 +302,38 @@ export default function ListingDetail({ listing, error }: ListingDetailProps) {
       {/* Modals */}
       <Dialog open={showImageModal} onOpenChange={setShowImageModal}>
         <DialogContent className="max-w-4xl">
-          {listing.images && listing.images.length > 0 && (
-            <div className="relative w-full h-full">
-              <img
-                src={listing.images[currentImageIndex].url}
+          {images.length > 0 && (
+            <div className="relative aspect-video">
+              <Image
+                src={images[currentImageIndex].url}
                 alt={`Full-screen property image ${currentImageIndex + 1}`}
-                className="w-full h-full object-contain"
+                fill
+                className="object-contain"
+                sizes="(max-width: 768px) 100vw, (max-width: 1200px) 80vw, 70vw"
               />
+              {images.length > 1 && (
+                <div className="absolute inset-0 flex items-center justify-between">
+                  <Button
+                    variant="outline"
+                    size="icon"
+                    className="ml-4 bg-white/80 hover:bg-white"
+                    onClick={previousImage}
+                  >
+                    <ChevronLeft className="h-4 w-4" />
+                  </Button>
+                  <Button
+                    variant="outline"
+                    size="icon"
+                    className="mr-4 bg-white/80 hover:bg-white"
+                    onClick={nextImage}
+                  >
+                    <ChevronRight className="h-4 w-4" />
+                  </Button>
+                </div>
+              )}
+              <div className="absolute bottom-4 right-4 bg-black/50 text-white px-2 py-1 rounded text-sm">
+                {currentImageIndex + 1} / {images.length}
+              </div>
             </div>
           )}
         </DialogContent>

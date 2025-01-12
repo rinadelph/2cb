@@ -11,6 +11,14 @@ export default function ListingsPage() {
   const { listings, isLoading, error } = useListings();
   const { user } = useAuth();
 
+  console.log('[ListingsPage] Current state:', {
+    showMyListings,
+    userLoggedIn: !!user,
+    userId: user?.id,
+    totalListings: listings?.length,
+    listingsData: listings
+  });
+
   if (isLoading) {
     return (
       <Layout>
@@ -29,6 +37,7 @@ export default function ListingsPage() {
   }
 
   if (error) {
+    console.error('[ListingsPage] Error loading listings:', error);
     return (
       <Layout>
         <div className="text-center py-8 text-red-500">Error loading listings</div>
@@ -37,8 +46,23 @@ export default function ListingsPage() {
   }
 
   const filteredListings = showMyListings 
-    ? listings.filter(listing => listing.user_id === user?.id)
+    ? listings.filter(listing => {
+        console.log('[ListingsPage] Filtering listing:', {
+          listingId: listing.id,
+          listingUserId: listing.user_id,
+          currentUserId: user?.id,
+          isMatch: listing.user_id === user?.id
+        });
+        return listing.user_id === user?.id;
+      })
     : listings;
+
+  console.log('[ListingsPage] Filtered results:', {
+    showMyListings,
+    totalListings: listings.length,
+    filteredCount: filteredListings.length,
+    filteredListings
+  });
 
   return (
     <Layout>
@@ -47,7 +71,13 @@ export default function ListingsPage() {
           <h1 className="text-2xl font-bold">Listings</h1>
           <div className="flex gap-4">
             <Button
-              onClick={() => setShowMyListings(!showMyListings)}
+              onClick={() => {
+                console.log('[ListingsPage] Toggling view:', {
+                  current: showMyListings,
+                  switching: !showMyListings
+                });
+                setShowMyListings(!showMyListings);
+              }}
               variant={showMyListings ? "default" : "secondary"}
             >
               {showMyListings ? 'Show All Listings' : 'Show My Listings'}
