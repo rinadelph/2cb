@@ -13,13 +13,15 @@ export interface ImageUploadProps {
   onChange: (value: string[]) => void;
   onRemove: (value: string) => void;
   className?: string;
+  listingId: string;
 }
 
 export function ImageUpload({
   value,
   onChange,
   onRemove,
-  className
+  className,
+  listingId
 }: ImageUploadProps) {
   const [isUploading, setIsUploading] = useState(false);
   const { toast } = useToast();
@@ -31,6 +33,15 @@ export function ImageUpload({
       console.log('[ImageUpload] Starting upload for files:', acceptedFiles.map(f => ({ name: f.name, size: f.size, type: f.type })));
 
       const supabase = getSupabaseClient();
+      
+      // Add auth state debugging
+      const { data: { session } } = await supabase.auth.getSession();
+      console.log('[ImageUpload] Auth state before upload:', {
+        hasSession: !!session,
+        userId: session?.user?.id,
+        email: session?.user?.email,
+        role: session?.user?.role
+      });
 
       for (const file of acceptedFiles) {
         try {
@@ -43,30 +54,41 @@ export function ImageUpload({
           // Create a clean filename
           const timestamp = Date.now();
           const randomId = Math.random().toString(36).substring(2, 10);
-          const cleanFileName = `${timestamp}-${randomId}.${fileExt}`;
+          const cleanFileName = `${listingId}/${timestamp}-${randomId}.${fileExt}`;
 
-          console.log('[ImageUpload] Processing file:', {
+          console.log('[ImageUpload] Attempting upload:', {
             originalName: file.name,
             newName: cleanFileName,
             size: file.size,
-            type: file.type
+            type: file.type,
+            bucket: 'listing-images',
+            listingId,
+            path: `listing-images/${cleanFileName}`
           });
 
           // Upload the file
           const { error: uploadError, data } = await supabase.storage
-            .from('listings')
+            .from('listing-images')
             .upload(cleanFileName, file, {
+              contentType: file.type,
               cacheControl: '3600',
-              upsert: true // Changed to true to handle potential duplicates
+              upsert: true
             });
 
           if (uploadError) {
-            console.error('[ImageUpload] Upload error:', {
+            console.error('[ImageUpload] Upload error details:', {
               error: uploadError,
+              code: uploadError.statusCode,
+              message: uploadError.message,
+              details: uploadError.error,
               file: cleanFileName,
-              message: uploadError.message
+              auth: {
+                hasSession: !!session,
+                userId: session?.user?.id,
+                role: session?.user?.role
+              }
             });
-            throw new Error(`Upload failed: ${uploadError.message}`);
+            throw uploadError;
           }
 
           console.log('[ImageUpload] Upload successful:', {
@@ -76,7 +98,7 @@ export function ImageUpload({
 
           // Get the public URL
           const { data: { publicUrl } } = supabase.storage
-            .from('listings')
+            .from('listing-images')
             .getPublicUrl(cleanFileName);
 
           console.log('[ImageUpload] Public URL generated:', {
@@ -127,7 +149,7 @@ export function ImageUpload({
     } finally {
       setIsUploading(false);
     }
-  }, [onChange, value, toast]);
+  }, [onChange, value, toast, listingId]);
 
   const { getRootProps, getInputProps, isDragActive } = useDropzone({
     onDrop,

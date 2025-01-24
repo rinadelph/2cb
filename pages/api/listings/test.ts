@@ -36,7 +36,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
     // Create a test listing
     const testListing: Partial<ListingBase> = {
-      user_id: user.id, // Use authenticated user's ID
+      user_id: user.id,
       title: `Test Listing ${new Date().toISOString()}`,
       description: 'This is a test listing created automatically',
       status: 'draft',
@@ -50,27 +50,35 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       lot_size: 0.25,
       parking_spaces: 2,
       stories: 2,
-      address: {
-        street_number: '123',
-        street_name: 'Test Street',
-        city: 'Test City',
-        state: 'FL',
-        zip: '33133',
-        country: 'US'
-      },
+      address_street_number: '123',
+      address_street_name: 'Test Street',
+      address: '123 Test Street',
+      city: 'Test City',
+      state: 'FL',
+      zip_code: '33133',
+      country: 'US',
       location: {
+        type: 'Point',
+        coordinates: [-80.1918, 25.7617],
         lat: 25.7617,
         lng: -80.1918
       },
-      features: ['Pool', 'Garage', 'Central AC'],
-      amenities: ['Gym', 'Pool', 'Tennis Court'],
-      images: [],
-      documents: [],
-      meta_data: {
-        is_test: true,
-        created_by: user.id,
-        created_at: new Date().toISOString()
-      }
+      features: {
+        construction_type: ['CBS'],
+        interior_features: ['Central AC', 'Tile Floors'],
+        exterior_features: ['Pool', 'Garage']
+      },
+      amenities: {
+        pool: true,
+        waterfront: false,
+        furnished: false
+      },
+      listing_office: 'Test Office',
+      listing_agent_name: 'Test Agent',
+      listing_agent_phone: '555-555-5555',
+      listing_agent_email: 'test@example.com',
+      listing_agent_license: 'FL123456',
+      mls_number: `TEST${Date.now()}`
     };
 
     // Use test context for Supabase client
@@ -91,15 +99,15 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     }
 
     return res.status(200).json(listing);
-  } catch (error: any) {
+  } catch (error) {
     console.error('Error creating test listing:', {
       error,
-      stack: error.stack,
+      stack: error instanceof Error ? error.stack : undefined,
       timestamp: new Date().toISOString()
     });
     return res.status(500).json({ 
       error: 'Failed to create test listing',
-      details: error.message
+      details: error instanceof Error ? error.message : 'Unknown error'
     });
   }
 } 

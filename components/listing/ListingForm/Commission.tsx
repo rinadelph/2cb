@@ -10,9 +10,9 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { CommissionStructure } from '@/types/commission';
 
 interface CommissionProps {
-  listingId?: string;
+  _listingId?: string;
   listingPrice: number;
-  onSubmit: (data: CommissionStructure) => Promise<void>;
+  _onSubmit: (data: CommissionStructure) => Promise<void>;
   initialData?: Partial<CommissionStructure>;
 }
 
@@ -27,7 +27,12 @@ interface CommissionFormData {
   };
 }
 
-export function Commission({ listingId, listingPrice, onSubmit, initialData }: CommissionProps) {
+export function Commission({
+  _listingId,
+  listingPrice,
+  initialData,
+  _onSubmit,
+}: CommissionProps) {
   const { register, watch, setValue, formState: { errors } } = useFormContext<CommissionFormData>();
   const commissionType = watch('commission.type') || 'percentage';
   const amount = watch('commission.amount') || 0;

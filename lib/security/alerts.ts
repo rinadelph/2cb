@@ -7,7 +7,17 @@ export type SecurityAlert = {
   severity: 'low' | 'medium' | 'high'
   message: string
   timestamp: string
-  metadata: Record<string, any>
+  metadata: {
+    ipAddress?: string
+    device?: string
+    failureCount?: number
+    location?: {
+      latitude: number
+      longitude: number
+      city?: string
+      country?: string
+    }
+  }
 }
 
 export class SecurityMonitor {

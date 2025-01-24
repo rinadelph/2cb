@@ -5,7 +5,7 @@ import { logger } from '@/lib/debug'
 import type { SupabaseClient } from '@supabase/supabase-js'
 import type { Database } from '@/types/supabase'
 
-export async function GET(req: Request) {
+export async function GET(_request: Request) {
   try {
     const supabase = createRouteHandlerClient<Database>({ cookies })
     

@@ -1,5 +1,4 @@
 import { Metadata } from "next";
-import { Layout } from "@/components/layout/layout";
 
 export const metadata: Metadata = {
   title: '2Click Broker',

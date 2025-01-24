@@ -1,4 +1,5 @@
 import { createClient } from '@supabase/supabase-js';
+import { PostgrestError } from '@supabase/supabase-js';
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
 const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
@@ -29,15 +30,22 @@ export const isAuthenticated = async () => {
   return !!session;
 };
 
-export const logError = (message: string, error: any) => {
+interface ErrorWithDetails {
+  message?: string;
+  details?: string;
+  hint?: string;
+  code?: string;
+}
+
+export const logError = (message: string, error: Error | PostgrestError | ErrorWithDetails) => {
   console.error(`[ERROR] ${message}:`, error);
-  if (error.message) console.error('Error message:', error.message);
-  if (error.details) console.error('Error details:', error.details);
-  if (error.hint) console.error('Error hint:', error.hint);
-  if (error.code) console.error('Error code:', error.code);
+  if ('message' in error) console.error('Error message:', error.message);
+  if ('details' in error) console.error('Error details:', error.details);
+  if ('hint' in error) console.error('Error hint:', error.hint);
+  if ('code' in error) console.error('Error code:', error.code);
 };
 
-export const logInfo = (message: string, data?: any) => {
+export const logInfo = (message: string, data?: unknown) => {
   console.log(`[INFO] ${message}`, data ? data : '');
 };
 

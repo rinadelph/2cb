@@ -1,0 +1,128 @@
+<mxfile host="app.diagrams.net" modified="2024-01-11T06:34:00.000Z" agent="Mozilla/5.0" version="21.6.8" type="device">
+  <diagram name="2-Click Broker Flow" id="main-flow">
+    <mxGraphModel dx="1422" dy="762" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1100" pageHeight="850" background="#ffffff">
+      <root>
+        <mxCell id="0"/>
+        <mxCell id="1" parent="0"/>
+        
+        <!-- Authentication Flow -->
+        <mxCell id="auth-start" value="User Registration/Login" style="rounded=1;fillColor=#dae8fc;strokeColor=#6c8ebf;fontStyle=1" vertex="1" parent="1">
+          <mxGeometry x="40" y="40" width="160" height="60" as="geometry"/>
+        </mxCell>
+        
+        <mxCell id="auth-details" value="Authentication Details&#10;- Name&#10;- Email&#10;- License Number&#10;- Company&#10;- Role" style="align=left;spacingLeft=5;rounded=1;fillColor=#f5f5f5;strokeColor=#666666;fontColor=#333333" vertex="1" parent="1">
+          <mxGeometry x="40" y="120" width="160" height="100" as="geometry"/>
+        </mxCell>
+
+        <mxCell id="license-check" value="License Check" style="rounded=1;fillColor=#f5f5f5;strokeColor=#666666;fontColor=#333333" vertex="1" parent="1">
+          <mxGeometry x="40" y="240" width="160" height="60" as="geometry"/>
+        </mxCell>
+
+        <!-- Core Features Container -->
+        <mxCell id="core-features" value="Core Features" style="swimlane;fontStyle=1;fillColor=#fff2cc;strokeColor=#d6b656" vertex="1" parent="1">
+          <mxGeometry x="240" y="40" width="600" height="400" as="geometry"/>
+        </mxCell>
+
+        <!-- Listing Management -->
+        <mxCell id="listing-mgmt" value="Listing Management" style="rounded=1;fillColor=#d5e8d4;strokeColor=#82b366;fontStyle=1" vertex="1" parent="core-features">
+          <mxGeometry x="40" y="40" width="160" height="60" as="geometry"/>
+        </mxCell>
+        
+        <!-- Commission Management -->
+        <mxCell id="commission-mgmt" value="Commission Management" style="rounded=1;fillColor=#ffe6cc;strokeColor=#d79b00;fontStyle=1" vertex="1" parent="core-features">
+          <mxGeometry x="240" y="40" width="160" height="60" as="geometry"/>
+        </mxCell>
+
+        <!-- E-Sign System -->
+        <mxCell id="esign-system" value="E-Sign System" style="rounded=1;fillColor=#f8cecc;strokeColor=#b85450;fontStyle=1" vertex="1" parent="core-features">
+          <mxGeometry x="440" y="40" width="160" height="60" as="geometry"/>
+        </mxCell>
+
+        <!-- Map Integration -->
+        <mxCell id="map-integration" value="Map Integration" style="rounded=1;fillColor=#e1d5e7;strokeColor=#9673a6;fontStyle=1" vertex="1" parent="core-features">
+          <mxGeometry x="40" y="140" width="160" height="60" as="geometry"/>
+        </mxCell>
+
+        <!-- Contract Management -->
+        <mxCell id="contract-mgmt" value="Contract Management" style="rounded=1;fillColor=#fff2cc;strokeColor=#d6b656;fontStyle=1" vertex="1" parent="core-features">
+          <mxGeometry x="240" y="140" width="160" height="60" as="geometry"/>
+        </mxCell>
+
+        <!-- Notification System -->
+        <mxCell id="notification-system" value="Notification System" style="rounded=1;fillColor=#dae8fc;strokeColor=#6c8ebf;fontStyle=1" vertex="1" parent="core-features">
+          <mxGeometry x="440" y="140" width="160" height="60" as="geometry"/>
+        </mxCell>
+
+        <!-- Organization Management -->
+        <mxCell id="org-mgmt" value="Organization Management" style="rounded=1;fillColor=#d5e8d4;strokeColor=#82b366;fontStyle=1" vertex="1" parent="core-features">
+          <mxGeometry x="40" y="240" width="160" height="60" as="geometry"/>
+        </mxCell>
+
+        <!-- Analytics -->
+        <mxCell id="analytics" value="Analytics Dashboard" style="rounded=1;fillColor=#ffe6cc;strokeColor=#d79b00;fontStyle=1" vertex="1" parent="core-features">
+          <mxGeometry x="240" y="240" width="160" height="60" as="geometry"/>
+        </mxCell>
+
+        <!-- Documentation -->
+        <mxCell id="documentation" value="Documentation/Help" style="rounded=1;fillColor=#f8cecc;strokeColor=#b85450;fontStyle=1" vertex="1" parent="core-features">
+          <mxGeometry x="440" y="240" width="160" height="60" as="geometry"/>
+        </mxCell>
+
+        <!-- Implementation Status -->
+        <mxCell id="status-legend" value="Implementation Status" style="swimlane;fontStyle=1" vertex="1" parent="1">
+          <mxGeometry x="880" y="40" width="180" height="120" as="geometry"/>
+        </mxCell>
+
+        <mxCell id="status-not-started" value="Not Started" style="rounded=1;fillColor=#f5f5f5;strokeColor=#666666;fontColor=#333333" vertex="1" parent="status-legend">
+          <mxGeometry x="20" y="30" width="140" height="20" as="geometry"/>
+        </mxCell>
+
+        <mxCell id="status-in-progress" value="In Progress" style="rounded=1;fillColor=#fff2cc;strokeColor=#d6b656" vertex="1" parent="status-legend">
+          <mxGeometry x="20" y="60" width="140" height="20" as="geometry"/>
+        </mxCell>
+
+        <mxCell id="status-completed" value="Completed" style="rounded=1;fillColor=#d5e8d4;strokeColor=#82b366" vertex="1" parent="status-legend">
+          <mxGeometry x="20" y="90" width="140" height="20" as="geometry"/>
+        </mxCell>
+
+        <!-- Connections -->
+        <mxCell id="auth-flow1" value="" style="endArrow=classic;html=1;exitX=0.5;exitY=1;entryX=0.5;entryY=0" edge="1" parent="1" source="auth-start" target="auth-details">
+          <mxGeometry width="50" height="50" relative="1" as="geometry"/>
+        </mxCell>
+
+        <mxCell id="auth-flow2" value="" style="endArrow=classic;html=1;exitX=0.5;exitY=1;entryX=0.5;entryY=0" edge="1" parent="1" source="auth-details" target="license-check">
+          <mxGeometry width="50" height="50" relative="1" as="geometry"/>
+        </mxCell>
+
+        <mxCell id="core-flow1" value="" style="endArrow=classic;html=1;exitX=1;exitY=0.5;entryX=0;entryY=0.5" edge="1" parent="1" source="license-check" target="listing-mgmt">
+          <mxGeometry width="50" height="50" relative="1" as="geometry"/>
+        </mxCell>
+
+        <mxCell id="core-flow2" value="" style="endArrow=classic;html=1;exitX=1;exitY=0.5;entryX=0;entryY=0.5" edge="1" parent="1" source="listing-mgmt" target="commission-mgmt">
+          <mxGeometry width="50" height="50" relative="1" as="geometry"/>
+        </mxCell>
+
+        <mxCell id="core-flow3" value="" style="endArrow=classic;html=1;exitX=1;exitY=0.5;entryX=0;entryY=0.5" edge="1" parent="1" source="commission-mgmt" target="esign-system">
+          <mxGeometry width="50" height="50" relative="1" as="geometry"/>
+        </mxCell>
+
+        <mxCell id="core-flow4" value="" style="endArrow=classic;html=1;exitX=0.5;exitY=1;entryX=0.5;entryY=0" edge="1" parent="1" source="listing-mgmt" target="map-integration">
+          <mxGeometry width="50" height="50" relative="1" as="geometry"/>
+        </mxCell>
+
+        <mxCell id="core-flow5" value="" style="endArrow=classic;html=1;exitX=1;exitY=0.5;entryX=0;entryY=0.5" edge="1" parent="1" source="esign-system" target="contract-mgmt">
+          <mxGeometry width="50" height="50" relative="1" as="geometry"/>
+        </mxCell>
+
+        <mxCell id="core-flow6" value="" style="endArrow=classic;html=1;exitX=1;exitY=0.5;entryX=0;entryY=0.5" edge="1" parent="1" source="contract-mgmt" target="notification-system">
+          <mxGeometry width="50" height="50" relative="1" as="geometry"/>
+        </mxCell>
+
+        <mxCell id="core-flow7" value="" style="endArrow=classic;html=1;exitX=1;exitY=0.5;entryX=0;entryY=0.5" edge="1" parent="1" source="org-mgmt" target="analytics">
+          <mxGeometry width="50" height="50" relative="1" as="geometry"/>
+        </mxCell>
+
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile> 

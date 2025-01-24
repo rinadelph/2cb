@@ -1,6 +1,6 @@
 import { getSupabaseClient } from "@/lib/supabase-client";
 import { ListingFormValues } from "@/lib/schemas/listing-schema";
-import { ListingBase } from "@/types/listing";
+import { ListingBase, ListingFeatures, ListingAmenities, ListingFormBase, Listing, ListingImage } from "@/types/listing";
 import { 
   ListingStatus, 
   PropertyType, 
@@ -13,8 +13,80 @@ import {
 import { CommissionStructure } from '@/types/commission';
 
 interface ListingResponse {
-  listing: ListingBase | null;
+  listing: Listing | null;
   error: Error | null;
+}
+
+interface RawImage {
+  id?: string;
+  url: string;
+  width?: number;
+  height?: number;
+  size?: number;
+  type?: string;
+  is_featured?: boolean;
+  order?: number;
+  meta_data?: Record<string, unknown>;
+}
+
+interface RawListing {
+  id: string;
+  user_id?: string;
+  organization_id?: string;
+  title: string;
+  description: string;
+  status: string;
+  property_type: PropertyType;
+  listing_type: ListingType;
+  price: number;
+  bedrooms: number;
+  bathrooms: number;
+  square_feet: number;
+  lot_size: number;
+  year_built: number;
+  parking_spaces: number;
+  stories: number;
+  address_street_number: string;
+  address_street_name: string;
+  address_unit?: string;
+  address: string;
+  city: string;
+  state: string;
+  zip_code: string;
+  country?: string;
+  location?: {
+    type: 'Point';
+    coordinates: [number, number];
+  };
+  listing_office: string;
+  listing_agent_name: string;
+  listing_agent_phone: string;
+  listing_agent_email: string;
+  listing_agent_license: string;
+  showing_instructions?: string;
+  broker_remarks?: string;
+  mls_number: string;
+  virtual_tour_url?: string;
+  property_tax?: number;
+  maintenance_fee?: number;
+  construction_type?: string;
+  interior_features?: string[];
+  exterior_features?: string[];
+  parking?: string;
+  lot_features?: string[];
+  view?: string;
+  waterfront?: boolean;
+  pool?: boolean;
+  commission_amount?: string;
+  commission_type?: string;
+  commission_terms?: string;
+  commission_status?: string;
+  commission_visibility?: string;
+  features?: ListingFeatures;
+  amenities?: ListingAmenities;
+  images?: RawImage[];
+  created_at: string;
+  updated_at: string;
 }
 
 const mapStatus = (status: string): ListingStatus => {
@@ -33,27 +105,31 @@ const mapStatus = (status: string): ListingStatus => {
   }
 };
 
-const formatListing = (listing: any): ListingBase => ({
-  id: listing.id,
+const formatListing = (listing: Partial<RawListing>): Listing => ({
+  id: listing.id || '',
   user_id: listing.user_id,
   organization_id: listing.organization_id,
-  title: listing.title,
+  title: listing.title || '',
   description: listing.description || '',
-  status: mapStatus(listing.status),
-  property_type: listing.property_type,
-  listing_type: listing.listing_type || 'sale' as ListingType,
+  status: mapStatus(listing.status || '') as ListingFormBase['status'],
+  property_type: listing.property_type || 'single_family',
+  listing_type: listing.listing_type || 'sale',
   price: Number(listing.price) || 0,
-
-  // Address fields (flat structure)
+  bedrooms: Number(listing.bedrooms) || 0,
+  bathrooms: Number(listing.bathrooms) || 0,
+  square_feet: Number(listing.square_feet) || 0,
+  lot_size: Number(listing.lot_size) || 0,
+  year_built: Number(listing.year_built) || 0,
+  parking_spaces: Number(listing.parking_spaces) || 0,
+  stories: Number(listing.stories) || 0,
   address_street_number: listing.address_street_number || '',
   address_street_name: listing.address_street_name || '',
   address_unit: listing.address_unit,
+  address: listing.address || '',
   city: listing.city || '',
   state: listing.state || '',
   zip_code: listing.zip_code || '',
-  country: listing.country || 'US',
-
-  // Location fields
+  country: listing.country,
   location: listing.location?.type === 'Point' ? {
     type: 'Point',
     coordinates: [
@@ -62,49 +138,36 @@ const formatListing = (listing: any): ListingBase => ({
     ],
     lat: listing.location.coordinates[1],
     lng: listing.location.coordinates[0]
-  } : {
-    type: 'Point',
-    coordinates: [0, 0],
-    lat: 0,
-    lng: 0
-  },
-
-  // Property details
-  square_feet: listing.square_feet ? Number(listing.square_feet) : undefined,
-  bedrooms: listing.bedrooms ? Number(listing.bedrooms) : undefined,
-  bathrooms: listing.bathrooms ? Number(listing.bathrooms) : undefined,
-  year_built: listing.year_built ? Number(listing.year_built) : undefined,
-  lot_size: listing.lot_size ? Number(listing.lot_size) : undefined,
-  parking_spaces: listing.parking_spaces ? Number(listing.parking_spaces) : undefined,
-  stories: listing.stories ? Number(listing.stories) : undefined,
-
-  // JSON fields
-  features: listing.features || {},
-  amenities: listing.amenities || {},
-  images: (listing.images || []).map((image: any) => ({
-    id: image.id || crypto.randomUUID(),
-    url: image.url,
-    width: Number(image.width) || 0,
-    height: Number(image.height) || 0,
-    size: Number(image.size) || 0,
-    type: image.type || 'image/jpeg',
-    is_featured: Boolean(image.is_featured),
-    order: Number(image.order) || 0,
-    meta_data: image.meta_data || {}
-  })),
-  documents: listing.documents || [],
-  meta_data: listing.meta_data || {},
-
-  // Commission fields
-  commission_amount: listing.commission_amount ? Number(listing.commission_amount) : undefined,
+  } : undefined,
+  listing_office: listing.listing_office || '',
+  listing_agent_name: listing.listing_agent_name || '',
+  listing_agent_phone: listing.listing_agent_phone || '',
+  listing_agent_email: listing.listing_agent_email || '',
+  listing_agent_license: listing.listing_agent_license || '',
+  showing_instructions: listing.showing_instructions,
+  broker_remarks: listing.broker_remarks,
+  mls_number: listing.mls_number || '',
+  virtual_tour_url: listing.virtual_tour_url,
+  property_tax: listing.property_tax,
+  maintenance_fee: listing.maintenance_fee,
+  construction_type: listing.construction_type,
+  interior_features: listing.interior_features,
+  exterior_features: listing.exterior_features,
+  parking: listing.parking,
+  lot_features: listing.lot_features,
+  view: listing.view,
+  waterfront: listing.waterfront,
+  pool: listing.pool,
+  commission_amount: listing.commission_amount,
   commission_type: listing.commission_type,
   commission_terms: listing.commission_terms,
-  commission_status: listing.commission_status || 'draft',
-  commission_visibility: listing.commission_visibility || 'private',
-
-  // Timestamps
-  created_at: listing.created_at,
-  updated_at: listing.updated_at
+  commission_status: listing.commission_status,
+  commission_visibility: listing.commission_visibility,
+  features: listing.features,
+  amenities: listing.amenities,
+  created_at: listing.created_at || new Date().toISOString(),
+  updated_at: listing.updated_at || new Date().toISOString(),
+  images: formatImages(listing.images || [])
 });
 
 const formatFormData = (data: ListingFormValues, userId: string) => {
@@ -356,16 +419,14 @@ export const createTestListing = async (userId: string) => {
   }
 };
 
-export function transformListingData(data: any): ListingBase {
-  const { lat, lng, ...rest } = data;
-  
-  return {
-    ...rest,
-    location: {
-      type: 'Point',
-      coordinates: [lng || 0, lat || 0],
-      lat: lat || 0,
-      lng: lng || 0
-    }
-  };
+const formatImages = (images: RawImage[] = []): ListingImage[] => 
+  images.map(image => ({
+    id: image.id || crypto.randomUUID(),
+    url: image.url,
+    position: image.order || 0,
+    is_featured: Boolean(image.is_featured)
+  }));
+
+export function transformListingData(data: RawListing): ListingBase {
+  return formatListing(data);
 } 

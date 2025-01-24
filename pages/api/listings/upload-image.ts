@@ -93,7 +93,7 @@ export default async function handler(
       multiples: true,
     });
 
-    const [fields, files] = await new Promise<[formidable.Fields, Record<string, FormidableFile | FormidableFile[]>]>((resolve, reject) => {
+    const [_fields, files] = await new Promise<[formidable.Fields, Record<string, FormidableFile | FormidableFile[]>]>((resolve, reject) => {
       form.parse(req, (err, fields, files) => {
         if (err) {
           console.error('Error parsing form:', err);

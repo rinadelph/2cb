@@ -1,39 +1,38 @@
 'use client'
 
 import React from 'react';
+import { useRouter } from 'next/router';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { Button } from '@/components/ui/button';
 import { listingSchema, ListingFormValues } from '@/schemas/listing';
 import { CommissionStructure } from '@/types/commission';
+import { useToast } from '@/components/ui/use-toast';
+import { createListing } from '@/lib/services/listings';
+import { Label } from '@/components/ui/label';
+import { ImageUpload } from '@/components/listings/image-upload';
+import { ListingImage } from '@/types/listing';
 import { BasicInfo } from './BasicInfo';
 import { LocationInfo } from './LocationInfo';
 import { Features } from './Features';
-import { Images } from './Images';
 import { Commission } from './Commission';
-import { useToast } from '@/components/ui/use-toast';
-import { FormProvider } from 'react-hook-form';
 import { PropertyDetails } from './PropertyDetails';
-import { createListing } from '@/lib/api/listings';
-import { useRouter } from 'next/router';
-import { AUTH_ROUTES } from '@/lib/routes';
+import { FormProvider } from 'react-hook-form';
 
 interface ListingFormProps {
   initialData?: Partial<ListingFormValues>;
   initialCommission?: Partial<CommissionStructure>;
-  onCommissionSubmit: (data: CommissionStructure) => Promise<void>;
+  _onCommissionSubmit: (data: CommissionStructure) => Promise<void>;
   onSubmit?: (data: ListingFormValues) => Promise<void>;
   mode?: 'create' | 'edit';
-  isSubmitting?: boolean;
 }
 
 export function ListingForm({
   initialData,
   initialCommission,
-  onCommissionSubmit,
+  _onCommissionSubmit,
   onSubmit,
   mode = 'create',
-  isSubmitting = false,
 }: ListingFormProps) {
   const router = useRouter();
   const { toast } = useToast();
@@ -54,13 +53,6 @@ export function ListingForm({
       property_type: 'single_family',
       listing_type: 'sale',
       price: 0,
-      address_street_number: '',
-      address_street_name: '',
-      address_unit: '',
-      city: '',
-      state: '',
-      zip_code: '',
-      country: 'US',
       square_feet: undefined,
       bedrooms: undefined,
       bathrooms: undefined,
@@ -68,81 +60,63 @@ export function ListingForm({
       lot_size: undefined,
       parking_spaces: undefined,
       stories: undefined,
-      location: defaultLocation,
+      address_street_number: '',
+      address_street_name: '',
+      address_unit: undefined,
+      city: '',
+      state: '',
+      zip_code: '',
+      country: 'US',
       features: {},
       amenities: {},
-      images: [],
-      commission_status: 'draft',
       meta_data: {},
-      ...initialData,
-      location: initialData?.location || defaultLocation,
-    },
-    mode: 'onChange',
+      commission_status: 'draft',
+      commission_type: undefined,
+      commission_amount: undefined,
+      commission_terms: undefined,
+      commission_visibility: undefined,
+      location: defaultLocation,
+      ...initialData
+    }
   });
 
-  // Debug logging for form state
-  React.useEffect(() => {
-    console.log('[ListingForm] Form State:', {
-      isDirty: methods.formState.isDirty,
-      isSubmitting: methods.formState.isSubmitting,
-      isValid: methods.formState.isValid,
-      errors: methods.formState.errors,
-      dirtyFields: Object.keys(methods.formState.dirtyFields),
-      touchedFields: Object.keys(methods.formState.touchedFields),
-    });
-  }, [methods.formState]);
-
-  // Force form to be dirty in edit mode since we're editing existing data
-  React.useEffect(() => {
-    if (mode === 'edit' && initialData) {
-      Object.keys(initialData).forEach(field => {
-        methods.trigger(field as keyof ListingFormValues);
-      });
-    }
-  }, [mode, initialData, methods]);
-
   const handleSubmit = async (formData: ListingFormValues) => {
-    console.log('[ListingForm] Attempting submit with data:', formData);
     try {
-      const transformedData = {
+      console.log('Submitting form data:', formData);
+      
+      const transformedData: ListingFormValues = {
         ...formData,
-        images: formData.images.map((img, index) => ({
-          ...img,
-          position: img.position ?? index,
-        })),
-        location: formData.location || defaultLocation,
+        images: (formData.images || []).map((_img: ListingImage) => ({
+          id: _img.id || '',
+          url: _img.url,
+          position: _img.position,
+          is_featured: _img.is_featured || false
+        }))
       };
-
-      console.log('[ListingForm] Transformed data:', transformedData);
 
       if (mode === 'edit' && onSubmit) {
         await onSubmit(transformedData);
-      } else {
-        const listing = await createListing(transformedData);
-        
-        if (transformedData.commission_amount && transformedData.commission_type) {
-          await onCommissionSubmit({
-            amount: transformedData.commission_amount,
-            type: transformedData.commission_type,
-            status: transformedData.commission_status || 'draft',
-            visibility: 'private',
-            listing_id: listing.id,
-          });
-        }
-
         toast({
-          title: "Success",
-          description: "Listing saved successfully",
+          title: 'Success',
+          description: 'Listing updated successfully'
         });
-
-        router.push(`${AUTH_ROUTES.listings}/${listing.id}`);
+      } else {
+        const { listing } = await createListing(transformedData);
+        if (!listing) {
+          throw new Error('Failed to create listing');
+        }
+        toast({
+          title: 'Success',
+          description: 'Listing created successfully'
+        });
+        router.push(`/listings/${listing.id}`);
       }
     } catch (error) {
-      console.error('[ListingForm] Form Submission Error:', error);
+      console.error('Error submitting form:', error);
       toast({
-        title: "Error",
-        description: error instanceof Error ? error.message : "Failed to save listing",
-        variant: "destructive"
+        title: 'Error',
+        description: error instanceof Error ? error.message : 'Failed to submit form',
+        variant: 'destructive'
       });
     }
   };
@@ -150,37 +124,43 @@ export function ListingForm({
   return (
     <FormProvider {...methods}>
       <form onSubmit={methods.handleSubmit(handleSubmit)} className="space-y-8">
-        <div className="grid grid-cols-1 gap-8 md:grid-cols-2">
-          <BasicInfo />
-          <LocationInfo />
-        </div>
+        <BasicInfo />
+        <LocationInfo />
         <PropertyDetails />
-        <Features />
-        <Images methods={methods} />
-        <Commission
-          listingId={methods.watch('id')}
-          listingPrice={methods.watch('price') || 0}
-          onSubmit={onCommissionSubmit}
+        <Features _methods={methods} />
+        <div className="space-y-4">
+          <div className="flex justify-between items-center">
+            <Label className="text-lg font-semibold">Images</Label>
+          </div>
+          <ImageUpload
+            value={(methods.getValues('images') || []).map(_img => _img.url)}
+            onChange={urls => {
+              const currentImages = methods.getValues('images') || [];
+              const newImages = urls.map((url, index) => ({
+                id: `temp-${Date.now()}-${index}`,
+                url,
+                position: currentImages.length + index,
+                is_featured: false
+              }));
+              methods.setValue('images', [...currentImages, ...newImages]);
+            }}
+            onRemove={url => {
+              const currentImages = methods.getValues('images') || [];
+              methods.setValue('images', currentImages.filter(_img => _img.url !== url));
+            }}
+            listingId={initialData?.id || ''}
+            className="mb-4"
+          />
+        </div>
+        <Commission 
+          _listingId={methods.getValues('id')}
+          listingPrice={methods.getValues('price') || 0}
+          _onSubmit={_onCommissionSubmit}
           initialData={initialCommission}
         />
-
-        {/* Form Actions */}
-        <div className="flex justify-end space-x-4">
-          <Button
-            type="submit"
-            disabled={methods.formState.isSubmitting || !methods.formState.isValid}
-            onClick={() => {
-              console.log('[ListingForm] Button clicked, form state:', {
-                isDirty: methods.formState.isDirty,
-                isSubmitting: methods.formState.isSubmitting,
-                isValid: methods.formState.isValid,
-                errors: methods.formState.errors
-              });
-            }}
-          >
-            {methods.formState.isSubmitting ? 'Saving...' : mode === 'edit' ? 'Update Listing' : 'Create Listing'}
-          </Button>
-        </div>
+        <Button type="submit" className="w-full">
+          {mode === 'edit' ? 'Update Listing' : 'Create Listing'}
+        </Button>
       </form>
     </FormProvider>
   );
