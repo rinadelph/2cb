@@ -26,8 +26,11 @@ export function ListingCard({ listing }: ListingCardProps) {
               sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
             />
           ) : (
-            <div className="flex h-full items-center justify-center bg-accent">
-              <Building2 className="h-12 w-12 text-muted-foreground/50" />
+            <div className="flex h-full items-center justify-center bg-gradient-to-br from-muted/50 to-muted p-8">
+              <div className="text-center">
+                <Building2 className="h-12 w-12 mx-auto text-muted-foreground/40" />
+                <p className="mt-2 text-sm text-muted-foreground">No image available</p>
+              </div>
             </div>
           )}
           <Badge 

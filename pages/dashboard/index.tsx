@@ -108,14 +108,14 @@ export default function DashboardPage() {
 
   return (
     <Layout>
-      <div className="container max-w-7xl mx-auto p-6 space-y-12">
+      <div className="container max-w-7xl mx-auto p-6 space-y-8">
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.5 }}
           className="space-y-2"
         >
-          <h1 className="text-4xl font-bold tracking-tight bg-gradient-to-r from-foreground to-foreground/70 bg-clip-text text-transparent">
+          <h1 className="text-4xl font-bold tracking-tight">
             Welcome back{user?.email ? `, ${user.email.split('@')[0]}!` : '!'}
           </h1>
           <p className="text-lg text-muted-foreground">
@@ -123,7 +123,7 @@ export default function DashboardPage() {
           </p>
         </motion.div>
 
-        <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
+        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
           {stats.map((stat, i) => (
             <motion.div
               key={stat.title}
@@ -136,7 +136,7 @@ export default function DashboardPage() {
           ))}
         </div>
 
-        <div className="grid gap-6 md:grid-cols-2">
+        <div className="grid gap-4 md:grid-cols-2">
           {actions.map((action, i) => (
             <motion.div
               key={action.title}
@@ -193,7 +193,7 @@ export default function DashboardPage() {
                 <Button
                   variant="outline"
                   size="icon"
-                  className="absolute -left-4 top-1/2 h-8 w-8 -translate-y-1/2 rounded-full bg-background/80 opacity-0 transition-opacity group-hover:opacity-100 hover:bg-accent"
+                  className="absolute -left-2 top-1/2 h-8 w-8 -translate-y-1/2 rounded-full bg-background/80 opacity-0 transition-opacity group-hover:opacity-100 hover:bg-accent shadow-lg"
                   onClick={() => scroll('left')}
                 >
                   <ChevronLeft className="h-4 w-4" />
@@ -201,7 +201,7 @@ export default function DashboardPage() {
                 <Button
                   variant="outline"
                   size="icon"
-                  className="absolute -right-4 top-1/2 h-8 w-8 -translate-y-1/2 rounded-full bg-background/80 opacity-0 transition-opacity group-hover:opacity-100 hover:bg-accent"
+                  className="absolute -right-2 top-1/2 h-8 w-8 -translate-y-1/2 rounded-full bg-background/80 opacity-0 transition-opacity group-hover:opacity-100 hover:bg-accent shadow-lg"
                   onClick={() => scroll('right')}
                 >
                   <ChevronRight className="h-4 w-4" />
