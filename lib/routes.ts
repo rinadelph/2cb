@@ -13,7 +13,8 @@ export const AUTH_ROUTES = {
   manageListing: '/listings/manage',
   editListing: '/listings/edit',
   settings: '/settings',
-  analytics: '/analytics'
+  analytics: '/analytics',
+  search: '/search'
 } as const;
 
 // Add route grouping types for better organization
@@ -32,6 +33,7 @@ export const PUBLIC_ROUTES = [
   AUTH_ROUTES.register,
   AUTH_ROUTES.callback,
   AUTH_ROUTES.verifyEmail,
+  AUTH_ROUTES.search,
   '/404'
 ] as const;
 
