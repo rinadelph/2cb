@@ -1,0 +1,9 @@
+{
+  "columns": {
+    "version": {
+      "type": "character varying",
+      "nullable": false,
+      "default": null
+    }
+  }
+}

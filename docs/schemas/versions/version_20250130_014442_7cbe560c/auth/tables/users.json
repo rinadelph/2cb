@@ -1,0 +1,179 @@
+{
+  "columns": {
+    "instance_id": {
+      "type": "uuid",
+      "nullable": true,
+      "default": null
+    },
+    "id": {
+      "type": "uuid",
+      "nullable": false,
+      "default": null
+    },
+    "aud": {
+      "type": "character varying",
+      "nullable": true,
+      "default": null
+    },
+    "role": {
+      "type": "character varying",
+      "nullable": true,
+      "default": null
+    },
+    "email": {
+      "type": "character varying",
+      "nullable": true,
+      "default": null
+    },
+    "encrypted_password": {
+      "type": "character varying",
+      "nullable": true,
+      "default": null
+    },
+    "email_confirmed_at": {
+      "type": "timestamp with time zone",
+      "nullable": true,
+      "default": null
+    },
+    "invited_at": {
+      "type": "timestamp with time zone",
+      "nullable": true,
+      "default": null
+    },
+    "confirmation_token": {
+      "type": "character varying",
+      "nullable": true,
+      "default": null
+    },
+    "confirmation_sent_at": {
+      "type": "timestamp with time zone",
+      "nullable": true,
+      "default": null
+    },
+    "recovery_token": {
+      "type": "character varying",
+      "nullable": true,
+      "default": null
+    },
+    "recovery_sent_at": {
+      "type": "timestamp with time zone",
+      "nullable": true,
+      "default": null
+    },
+    "email_change_token_new": {
+      "type": "character varying",
+      "nullable": true,
+      "default": null
+    },
+    "email_change": {
+      "type": "character varying",
+      "nullable": true,
+      "default": null
+    },
+    "email_change_sent_at": {
+      "type": "timestamp with time zone",
+      "nullable": true,
+      "default": null
+    },
+    "last_sign_in_at": {
+      "type": "timestamp with time zone",
+      "nullable": true,
+      "default": null
+    },
+    "raw_app_meta_data": {
+      "type": "jsonb",
+      "nullable": true,
+      "default": null
+    },
+    "raw_user_meta_data": {
+      "type": "jsonb",
+      "nullable": true,
+      "default": null
+    },
+    "is_super_admin": {
+      "type": "boolean",
+      "nullable": true,
+      "default": null
+    },
+    "created_at": {
+      "type": "timestamp with time zone",
+      "nullable": true,
+      "default": null
+    },
+    "updated_at": {
+      "type": "timestamp with time zone",
+      "nullable": true,
+      "default": null
+    },
+    "phone": {
+      "type": "text",
+      "nullable": true,
+      "default": "NULL::character varying"
+    },
+    "phone_confirmed_at": {
+      "type": "timestamp with time zone",
+      "nullable": true,
+      "default": null
+    },
+    "phone_change": {
+      "type": "text",
+      "nullable": true,
+      "default": "''::character varying"
+    },
+    "phone_change_token": {
+      "type": "character varying",
+      "nullable": true,
+      "default": "''::character varying"
+    },
+    "phone_change_sent_at": {
+      "type": "timestamp with time zone",
+      "nullable": true,
+      "default": null
+    },
+    "confirmed_at": {
+      "type": "timestamp with time zone",
+      "nullable": true,
+      "default": null
+    },
+    "email_change_token_current": {
+      "type": "character varying",
+      "nullable": true,
+      "default": "''::character varying"
+    },
+    "email_change_confirm_status": {
+      "type": "smallint",
+      "nullable": true,
+      "default": "0"
+    },
+    "banned_until": {
+      "type": "timestamp with time zone",
+      "nullable": true,
+      "default": null
+    },
+    "reauthentication_token": {
+      "type": "character varying",
+      "nullable": true,
+      "default": "''::character varying"
+    },
+    "reauthentication_sent_at": {
+      "type": "timestamp with time zone",
+      "nullable": true,
+      "default": null
+    },
+    "is_sso_user": {
+      "type": "boolean",
+      "nullable": false,
+      "default": "false"
+    },
+    "deleted_at": {
+      "type": "timestamp with time zone",
+      "nullable": true,
+      "default": null
+    },
+    "is_anonymous": {
+      "type": "boolean",
+      "nullable": false,
+      "default": "false"
+    }
+  }
+}

@@ -1,0 +1,42 @@
+{
+  "columns": {
+    "id": {
+      "type": "uuid",
+      "nullable": false,
+      "default": null
+    },
+    "user_id": {
+      "type": "uuid",
+      "nullable": false,
+      "default": null
+    },
+    "token_type": {
+      "type": "USER-DEFINED",
+      "nullable": false,
+      "default": null
+    },
+    "token_hash": {
+      "type": "text",
+      "nullable": false,
+      "default": null
+    },
+    "relates_to": {
+      "type": "text",
+      "nullable": false,
+      "default": null
+    },
+    "created_at": {
+      "type": "timestamp without time zone",
+      "nullable": false,
+      "default": "now()"
+    },
+    "updated_at": {
+      "type": "timestamp without time zone",
+      "nullable": false,
+      "default": "now()"
+    }
+  },
+  "rls_policies": {},
+  "foreign_keys": {},
+  "indexes": {}
+}

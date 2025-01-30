@@ -1,0 +1,52 @@
+{
+  "columns": {
+    "instance_id": {
+      "type": "uuid",
+      "nullable": true,
+      "default": null
+    },
+    "id": {
+      "type": "bigint",
+      "nullable": false,
+      "default": "nextval('auth.refresh_tokens_id_seq'::regclass)"
+    },
+    "token": {
+      "type": "character varying",
+      "nullable": true,
+      "default": null
+    },
+    "user_id": {
+      "type": "character varying",
+      "nullable": true,
+      "default": null
+    },
+    "revoked": {
+      "type": "boolean",
+      "nullable": true,
+      "default": null
+    },
+    "created_at": {
+      "type": "timestamp with time zone",
+      "nullable": true,
+      "default": null
+    },
+    "updated_at": {
+      "type": "timestamp with time zone",
+      "nullable": true,
+      "default": null
+    },
+    "parent": {
+      "type": "character varying",
+      "nullable": true,
+      "default": null
+    },
+    "session_id": {
+      "type": "uuid",
+      "nullable": true,
+      "default": null
+    }
+  },
+  "rls_policies": {},
+  "foreign_keys": {},
+  "indexes": {}
+}

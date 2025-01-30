@@ -1,0 +1,18 @@
+{
+  "timestamp": "20250130_020255",
+  "hash": "7cbe560c9da7c32c661ce64f49f8f29a7514927512653f48d6d9cb1c3222fbff",
+  "project_ref": "keghqwcyucumoarmlihp",
+  "schemas": [
+    "auth",
+    "extensions",
+    "graphql",
+    "graphql_public",
+    "pgbouncer",
+    "pgsodium",
+    "pgsodium_masks",
+    "public",
+    "realtime",
+    "storage",
+    "vault"
+  ]
+}

@@ -1,13 +1,25 @@
 import { z } from 'zod';
 
+// Add commission type enum
+const CommissionType = z.enum(['percentage', 'fixed']);
+const CommissionVisibility = z.enum(['public', 'private']);
+const CommissionStatus = z.enum(['pending', 'approved', 'rejected']);
+
 export const listingSchema = z.object({
   id: z.string().optional(),
   user_id: z.string().optional(),
   title: z.string().min(1, "Title is required"),
-  description: z.string(),
-  status: z.enum(['draft', 'pending', 'active', 'inactive', 'expired', 'sold']),
-  property_type: z.enum(['single_family', 'multi_family', 'condo', 'townhouse', 'land', 'commercial', 'industrial']),
-  listing_type: z.enum(['sale', 'rent', 'lease', 'auction']),
+  description: z.string().optional(),
+  status: z.enum(["draft", "published", "archived"]).default("draft"),
+  property_type: z.enum([
+    "single_family",
+    "multi_family",
+    "condo",
+    "townhouse",
+    "land",
+    "commercial"
+  ]),
+  listing_type: z.enum(["sale", "rent", "both"]),
   price: z.number().min(0),
   
   // Address fields
@@ -57,15 +69,26 @@ export const listingSchema = z.object({
     position: z.number()
   })).default([]),
   
-  // Commission fields
-  commission_amount: z.number().optional(),
-  commission_type: z.string().optional(),
-  commission_terms: z.string().optional(),
-  commission_status: z.string().optional(),
-  commission_visibility: z.string().optional(),
+  // Commission fields with proper validation
+  commission_type: CommissionType.optional(),
+  commission_amount: z.number()
+    .min(0, "Commission amount must be positive")
+    .optional()
+    .transform(val => val === null ? undefined : val),
+  commission_terms: z.string()
+    .max(1000, "Commission terms cannot exceed 1000 characters")
+    .optional(),
+  commission_visibility: CommissionVisibility
+    .default('private'),
+  commission_status: CommissionStatus
+    .default('pending'),
   
   // Optional fields
   meta_data: z.record(z.unknown()).default({})
 });
 
-export type ListingFormValues = z.infer<typeof listingSchema>; 
+// Export types
+export type ListingFormValues = z.infer<typeof listingSchema>;
+export type CommissionTypeValue = z.infer<typeof CommissionType>;
+export type CommissionVisibilityValue = z.infer<typeof CommissionVisibility>;
+export type CommissionStatusValue = z.infer<typeof CommissionStatus>; 

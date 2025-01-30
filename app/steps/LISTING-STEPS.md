@@ -19,38 +19,33 @@
 - [x] Geocoding and coordinate handling
 - [x] Progressive disclosure for unit numbers
 
-### 🔄 3. Property Details (Next Up)
-- **Purpose**: Core property specifications
-- **Schema Fields**:
-  - square_feet (optional number)
-  - bedrooms (optional number)
-  - bathrooms (optional number)
-  - year_built (optional number, 1800-present)
-  - lot_size (optional number)
-  - stories (optional number)
-- **UI Elements**:
-  - Number inputs with increment/decrement
-  - Slider for square footage
-  - Year picker with validation
-  - Quick-select common values
-  - Visual size comparisons
-- **Technical Requirements**:
-  - Number formatting and validation
-  - Min/max constraints
-  - Unit conversions (if needed)
-  - Real-time validation
-  - Responsive layout
+### ✅ 3. Property Details (Implemented)
+- [x] Dynamic square footage handling based on property type
+- [x] Intelligent slider with property-type-specific ranges
+- [x] Automatic acre conversion for large properties
+- [x] Property type specific quick-select values
+- [x] Number inputs with increment/decrement
+- [x] Real-time validation
+- [x] Responsive layout with property summary
 
-### 🔲 4. Features & Amenities (Pending)
-- **Purpose**: Property highlights
+### 🔄 4. Features & Amenities (Next Up)
+- **Purpose**: Property highlights and characteristics
 - **Schema Fields**:
   - features (record of booleans)
   - amenities (record of booleans)
   - parking_spaces (optional number)
 - **UI Elements**:
-  - Icon-based feature selection
-  - Grouped categories
-  - Quick-toggle switches
+  - Categorized feature groups
+  - Visual toggle switches
+  - Icon-based selections
+  - Search/filter for features
+  - Custom feature input
+- **Technical Requirements**:
+  - Dynamic feature categories
+  - State management for multiple toggles
+  - Search functionality
+  - Validation for required features
+  - Performance optimization for many toggles
 
 ### 🔲 5. Pricing & Status (Pending)
 - **Purpose**: Listing price and availability
@@ -70,17 +65,16 @@
 - Custom input components with error handling
 - Responsive design with Tailwind CSS
 - Step navigation with state preservation
-- Google Maps integration
-- Address validation and geocoding
-- Keyboard navigation support
-- Loading and error states
+- Property type-specific validations
+- Dynamic UI based on property type
+- Real-time calculations and conversions
 
 ## Next Steps
-1. Implement Property Details step
-   - Create number input components
-   - Add slider component for square footage
-   - Implement year picker
-   - Add quick-select options
+1. Implement Features & Amenities step
+   - Create feature categories
+   - Build toggle components
+   - Add search functionality
+   - Implement validation
 2. Add form state persistence between steps
 3. Implement validation between steps
 4. Add progress tracking
@@ -94,6 +88,8 @@
 - Implemented responsive layouts
 - Added map preview
 - Improved address selection UX
+- Added property type-specific UI adaptations
+- Added automatic unit conversions
 
 ## Remaining UI/UX Improvements
 - Add tooltips for complex fields

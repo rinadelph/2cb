@@ -1,0 +1,39 @@
+{
+  "columns": {
+    "id": {
+      "type": "uuid",
+      "nullable": false,
+      "default": null
+    },
+    "factor_id": {
+      "type": "uuid",
+      "nullable": false,
+      "default": null
+    },
+    "created_at": {
+      "type": "timestamp with time zone",
+      "nullable": false,
+      "default": null
+    },
+    "verified_at": {
+      "type": "timestamp with time zone",
+      "nullable": true,
+      "default": null
+    },
+    "ip_address": {
+      "type": "inet",
+      "nullable": false,
+      "default": null
+    },
+    "otp_code": {
+      "type": "text",
+      "nullable": true,
+      "default": null
+    },
+    "web_authn_session_data": {
+      "type": "jsonb",
+      "nullable": true,
+      "default": null
+    }
+  }
+}

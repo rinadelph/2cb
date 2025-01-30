@@ -1,0 +1,62 @@
+{
+  "columns": {
+    "id": {
+      "type": "uuid",
+      "nullable": false,
+      "default": null
+    },
+    "user_id": {
+      "type": "uuid",
+      "nullable": false,
+      "default": null
+    },
+    "created_at": {
+      "type": "timestamp with time zone",
+      "nullable": true,
+      "default": null
+    },
+    "updated_at": {
+      "type": "timestamp with time zone",
+      "nullable": true,
+      "default": null
+    },
+    "factor_id": {
+      "type": "uuid",
+      "nullable": true,
+      "default": null
+    },
+    "aal": {
+      "type": "USER-DEFINED",
+      "nullable": true,
+      "default": null
+    },
+    "not_after": {
+      "type": "timestamp with time zone",
+      "nullable": true,
+      "default": null
+    },
+    "refreshed_at": {
+      "type": "timestamp without time zone",
+      "nullable": true,
+      "default": null
+    },
+    "user_agent": {
+      "type": "text",
+      "nullable": true,
+      "default": null
+    },
+    "ip": {
+      "type": "inet",
+      "nullable": true,
+      "default": null
+    },
+    "tag": {
+      "type": "text",
+      "nullable": true,
+      "default": null
+    }
+  },
+  "rls_policies": {},
+  "foreign_keys": {},
+  "indexes": {}
+}

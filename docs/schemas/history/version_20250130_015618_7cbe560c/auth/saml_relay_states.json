@@ -1,0 +1,47 @@
+{
+  "columns": {
+    "id": {
+      "type": "uuid",
+      "nullable": false,
+      "default": null
+    },
+    "sso_provider_id": {
+      "type": "uuid",
+      "nullable": false,
+      "default": null
+    },
+    "request_id": {
+      "type": "text",
+      "nullable": false,
+      "default": null
+    },
+    "for_email": {
+      "type": "text",
+      "nullable": true,
+      "default": null
+    },
+    "redirect_to": {
+      "type": "text",
+      "nullable": true,
+      "default": null
+    },
+    "created_at": {
+      "type": "timestamp with time zone",
+      "nullable": true,
+      "default": null
+    },
+    "updated_at": {
+      "type": "timestamp with time zone",
+      "nullable": true,
+      "default": null
+    },
+    "flow_state_id": {
+      "type": "uuid",
+      "nullable": true,
+      "default": null
+    }
+  },
+  "rls_policies": {},
+  "foreign_keys": {},
+  "indexes": {}
+}

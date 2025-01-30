@@ -1,0 +1,52 @@
+{
+  "columns": {
+    "id": {
+      "type": "uuid",
+      "nullable": false,
+      "default": null
+    },
+    "sso_provider_id": {
+      "type": "uuid",
+      "nullable": false,
+      "default": null
+    },
+    "entity_id": {
+      "type": "text",
+      "nullable": false,
+      "default": null
+    },
+    "metadata_xml": {
+      "type": "text",
+      "nullable": false,
+      "default": null
+    },
+    "metadata_url": {
+      "type": "text",
+      "nullable": true,
+      "default": null
+    },
+    "attribute_mapping": {
+      "type": "jsonb",
+      "nullable": true,
+      "default": null
+    },
+    "created_at": {
+      "type": "timestamp with time zone",
+      "nullable": true,
+      "default": null
+    },
+    "updated_at": {
+      "type": "timestamp with time zone",
+      "nullable": true,
+      "default": null
+    },
+    "name_id_format": {
+      "type": "text",
+      "nullable": true,
+      "default": null
+    }
+  },
+  "rls_policies": {},
+  "foreign_keys": {},
+  "indexes": {}
+}

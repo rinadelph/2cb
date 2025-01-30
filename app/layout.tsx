@@ -1,4 +1,5 @@
 import { Metadata } from "next";
+import { PropertyMapProvider } from '@/components/providers/property-map-provider';
 
 export const metadata: Metadata = {
   title: '2Click Broker',
@@ -14,7 +15,9 @@ export default function RootLayout({
     <html lang="en" suppressHydrationWarning>
       <head />
       <body>
-        {children}
+        <PropertyMapProvider>
+          {children}
+        </PropertyMapProvider>
       </body>
     </html>
   );

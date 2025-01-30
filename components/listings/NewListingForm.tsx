@@ -6,6 +6,7 @@ import { listingSchema, ListingFormValues } from '@/schemas/listing';
 import { BasicInfoStep } from './steps/BasicInfoStep';
 import { LocationStep } from './steps/LocationStep';
 import { PropertyDetailsStep } from './steps/PropertyDetailsStep';
+import { FeaturesStep } from './steps/FeaturesStep';
 import { Button } from '@/components/ui/button';
 
 export function NewListingForm() {
@@ -35,6 +36,8 @@ export function NewListingForm() {
         return <LocationStep form={methods} onNext={handleNext} />;
       case 2:
         return <PropertyDetailsStep form={methods} onNext={handleNext} />;
+      case 3:
+        return <FeaturesStep form={methods} onNext={handleNext} />;
       default:
         return null;
     }

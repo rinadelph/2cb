@@ -1,0 +1,64 @@
+{
+  "columns": {
+    "id": {
+      "type": "uuid",
+      "nullable": false,
+      "default": null
+    },
+    "user_id": {
+      "type": "uuid",
+      "nullable": true,
+      "default": null
+    },
+    "auth_code": {
+      "type": "text",
+      "nullable": false,
+      "default": null
+    },
+    "code_challenge_method": {
+      "type": "USER-DEFINED",
+      "nullable": false,
+      "default": null
+    },
+    "code_challenge": {
+      "type": "text",
+      "nullable": false,
+      "default": null
+    },
+    "provider_type": {
+      "type": "text",
+      "nullable": false,
+      "default": null
+    },
+    "provider_access_token": {
+      "type": "text",
+      "nullable": true,
+      "default": null
+    },
+    "provider_refresh_token": {
+      "type": "text",
+      "nullable": true,
+      "default": null
+    },
+    "created_at": {
+      "type": "timestamp with time zone",
+      "nullable": true,
+      "default": null
+    },
+    "updated_at": {
+      "type": "timestamp with time zone",
+      "nullable": true,
+      "default": null
+    },
+    "authentication_method": {
+      "type": "text",
+      "nullable": false,
+      "default": null
+    },
+    "auth_code_issued_at": {
+      "type": "timestamp with time zone",
+      "nullable": true,
+      "default": null
+    }
+  }
+}

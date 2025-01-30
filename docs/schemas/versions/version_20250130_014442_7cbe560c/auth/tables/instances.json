@@ -1,0 +1,29 @@
+{
+  "columns": {
+    "id": {
+      "type": "uuid",
+      "nullable": false,
+      "default": null
+    },
+    "uuid": {
+      "type": "uuid",
+      "nullable": true,
+      "default": null
+    },
+    "raw_base_config": {
+      "type": "text",
+      "nullable": true,
+      "default": null
+    },
+    "created_at": {
+      "type": "timestamp with time zone",
+      "nullable": true,
+      "default": null
+    },
+    "updated_at": {
+      "type": "timestamp with time zone",
+      "nullable": true,
+      "default": null
+    }
+  }
+}

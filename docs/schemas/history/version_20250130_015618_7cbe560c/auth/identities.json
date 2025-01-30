@@ -1,0 +1,52 @@
+{
+  "columns": {
+    "provider_id": {
+      "type": "text",
+      "nullable": false,
+      "default": null
+    },
+    "user_id": {
+      "type": "uuid",
+      "nullable": false,
+      "default": null
+    },
+    "identity_data": {
+      "type": "jsonb",
+      "nullable": false,
+      "default": null
+    },
+    "provider": {
+      "type": "text",
+      "nullable": false,
+      "default": null
+    },
+    "last_sign_in_at": {
+      "type": "timestamp with time zone",
+      "nullable": true,
+      "default": null
+    },
+    "created_at": {
+      "type": "timestamp with time zone",
+      "nullable": true,
+      "default": null
+    },
+    "updated_at": {
+      "type": "timestamp with time zone",
+      "nullable": true,
+      "default": null
+    },
+    "email": {
+      "type": "text",
+      "nullable": true,
+      "default": null
+    },
+    "id": {
+      "type": "uuid",
+      "nullable": false,
+      "default": "gen_random_uuid()"
+    }
+  },
+  "rls_policies": {},
+  "foreign_keys": {},
+  "indexes": {}
+}

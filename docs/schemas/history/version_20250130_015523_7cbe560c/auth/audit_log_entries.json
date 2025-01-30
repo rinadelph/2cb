@@ -1,0 +1,32 @@
+{
+  "columns": {
+    "instance_id": {
+      "type": "uuid",
+      "nullable": true,
+      "default": null
+    },
+    "id": {
+      "type": "uuid",
+      "nullable": false,
+      "default": null
+    },
+    "payload": {
+      "type": "json",
+      "nullable": true,
+      "default": null
+    },
+    "created_at": {
+      "type": "timestamp with time zone",
+      "nullable": true,
+      "default": null
+    },
+    "ip_address": {
+      "type": "character varying",
+      "nullable": false,
+      "default": "''::character varying"
+    }
+  },
+  "rls_policies": {},
+  "foreign_keys": {},
+  "indexes": {}
+}

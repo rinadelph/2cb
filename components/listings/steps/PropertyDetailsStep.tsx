@@ -10,7 +10,7 @@ import { Button } from '@/components/ui/button';
 import { HiPlus, HiMinus, HiHome, HiBuildingOffice2, HiCalendar } from 'react-icons/hi2';
 import { cn } from '@/lib/utils';
 import { Input } from "@/components/ui/input"
-import { useState } from "react"
+import { useState, useEffect } from "react"
 
 interface PropertyDetailsStepProps {
   form: UseFormReturn<ListingFormValues>;
@@ -54,40 +54,97 @@ function NumberInput({ value, onChange, min = 0, max = 100, step = 1, disabled }
   );
 }
 
-const COMMON_SIZES = [
-  { label: '1,000', value: 1000 },
-  { label: '1,500', value: 1500 },
-  { label: '2,000', value: 2000 },
-  { label: '2,500', value: 2500 },
-  { label: '3,000', value: 3000 },
-];
+// Helper function to determine max square footage based on property type
+function getMaxSquareFootage(propertyType: ListingFormValues['property_type']): number {
+  switch (propertyType) {
+    case 'commercial':
+    case 'industrial':
+      return 1_000_000; // 1 million sq ft for commercial/industrial
+    case 'multi_family':
+      return 100_000; // 100k sq ft for multi-family
+    default:
+      return 25_000; // 25k sq ft for residential
+  }
+}
+
+// Helper function to get slider steps based on property type
+function getSliderSteps(propertyType: ListingFormValues['property_type']): number[] {
+  switch (propertyType) {
+    case 'commercial':
+    case 'industrial':
+      return [0, 25000, 100000, 250000, 500000, 1000000];
+    case 'multi_family':
+      return [0, 10000, 25000, 50000, 75000, 100000];
+    default:
+      return [0, 2500, 5000, 10000, 15000, 25000];
+  }
+}
 
 export function PropertyDetailsStep({ form, onNext }: PropertyDetailsStepProps) {
   const { setValue, watch } = form;
   const [isCustomSize, setIsCustomSize] = useState(false);
+  const propertyType = watch('property_type');
   const squareFeet = watch('square_feet') || 0;
   const bedrooms = watch('bedrooms') || 0;
   const bathrooms = watch('bathrooms') || 0;
   const yearBuilt = watch('year_built') || new Date().getFullYear();
   const stories = watch('stories') || 1;
 
+  // Update slider max value when property type changes
+  const maxSquareFootage = getMaxSquareFootage(propertyType);
+  const sliderSteps = getSliderSteps(propertyType);
+
   const handleSquareFootageChange = (value: string) => {
     const cleanValue = value.replace(/[^0-9]/g, '');
     const numValue = parseInt(cleanValue, 10) || 0;
-    
-    const limitedValue = Math.min(numValue, 100_000_000);
+    const limitedValue = Math.min(numValue, maxSquareFootage);
     
     setValue('square_feet', limitedValue);
     setIsCustomSize(true);
   };
 
   const formatSquareFootage = (value: number): string => {
-    return value.toLocaleString();
+    if (value >= 43560) { // 1 acre = 43,560 sq ft
+      const acres = (value / 43560).toFixed(2);
+      return `${value.toLocaleString()} sq ft (${acres} acres)`;
+    }
+    return `${value.toLocaleString()} sq ft`;
   };
 
   const handleSliderChange = (value: number) => {
     setValue('square_feet', value);
     setIsCustomSize(false);
+  };
+
+  // Get common sizes based on property type
+  const getCommonSizes = () => {
+    switch (propertyType) {
+      case 'commercial':
+      case 'industrial':
+        return [
+          { label: '10,000', value: 10000 },
+          { label: '25,000', value: 25000 },
+          { label: '50,000', value: 50000 },
+          { label: '100,000', value: 100000 },
+          { label: '250,000', value: 250000 },
+        ];
+      case 'multi_family':
+        return [
+          { label: '5,000', value: 5000 },
+          { label: '10,000', value: 10000 },
+          { label: '20,000', value: 20000 },
+          { label: '35,000', value: 35000 },
+          { label: '50,000', value: 50000 },
+        ];
+      default:
+        return [
+          { label: '1,000', value: 1000 },
+          { label: '1,500', value: 1500 },
+          { label: '2,000', value: 2000 },
+          { label: '2,500', value: 2500 },
+          { label: '3,000', value: 3000 },
+        ];
+    }
   };
 
   return (
@@ -102,7 +159,7 @@ export function PropertyDetailsStep({ form, onNext }: PropertyDetailsStepProps) 
             <Input
               type="text"
               className="w-36 text-right"
-              value={formatSquareFootage(squareFeet)}
+              value={squareFeet.toLocaleString()}
               onChange={(e) => handleSquareFootageChange(e.target.value)}
               onFocus={() => setIsCustomSize(true)}
             />
@@ -114,20 +171,18 @@ export function PropertyDetailsStep({ form, onNext }: PropertyDetailsStepProps) 
             <Slider
               value={[squareFeet]}
               onValueChange={([value]) => handleSliderChange(value)}
-              max={10000}
-              step={100}
+              max={maxSquareFootage}
+              step={propertyType === 'commercial' || propertyType === 'industrial' ? 1000 : 100}
               className="py-4"
             />
             <div className="flex justify-between text-xs text-muted-foreground">
-              <span>0</span>
-              <span>2,500</span>
-              <span>5,000</span>
-              <span>7,500</span>
-              <span>10,000+</span>
+              {sliderSteps.map((step) => (
+                <span key={step}>{step.toLocaleString()}</span>
+              ))}
             </div>
           </div>
           <div className="flex flex-wrap gap-2">
-            {COMMON_SIZES.map(({ label, value }) => (
+            {getCommonSizes().map(({ label, value }) => (
               <Button
                 key={value}
                 variant={squareFeet === value && !isCustomSize ? "default" : "outline"}
@@ -221,7 +276,7 @@ export function PropertyDetailsStep({ form, onNext }: PropertyDetailsStepProps) 
             <div>
               <div className="text-muted-foreground">Size</div>
               <div className="font-medium">
-                {formatSquareFootage(squareFeet)} sq ft
+                {formatSquareFootage(squareFeet)}
               </div>
             </div>
             <div>

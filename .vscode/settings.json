@@ -20,5 +20,7 @@
   ],
   "[typescript]": {
     "editor.defaultFormatter": "denoland.vscode-deno"
-  }
+  },
+  "cursor.aipreview.enabled": true,
+  "cursor.cmdk.useThemedDiffBackground": false
 }

@@ -1,0 +1,64 @@
+{
+  "columns": {
+    "id": {
+      "type": "uuid",
+      "nullable": false,
+      "default": null
+    },
+    "user_id": {
+      "type": "uuid",
+      "nullable": false,
+      "default": null
+    },
+    "friendly_name": {
+      "type": "text",
+      "nullable": true,
+      "default": null
+    },
+    "factor_type": {
+      "type": "USER-DEFINED",
+      "nullable": false,
+      "default": null
+    },
+    "status": {
+      "type": "USER-DEFINED",
+      "nullable": false,
+      "default": null
+    },
+    "created_at": {
+      "type": "timestamp with time zone",
+      "nullable": false,
+      "default": null
+    },
+    "updated_at": {
+      "type": "timestamp with time zone",
+      "nullable": false,
+      "default": null
+    },
+    "secret": {
+      "type": "text",
+      "nullable": true,
+      "default": null
+    },
+    "phone": {
+      "type": "text",
+      "nullable": true,
+      "default": null
+    },
+    "last_challenged_at": {
+      "type": "timestamp with time zone",
+      "nullable": true,
+      "default": null
+    },
+    "web_authn_credential": {
+      "type": "jsonb",
+      "nullable": true,
+      "default": null
+    },
+    "web_authn_aaguid": {
+      "type": "uuid",
+      "nullable": true,
+      "default": null
+    }
+  }
+}

@@ -1,0 +1,29 @@
+{
+  "columns": {
+    "session_id": {
+      "type": "uuid",
+      "nullable": false,
+      "default": null
+    },
+    "created_at": {
+      "type": "timestamp with time zone",
+      "nullable": false,
+      "default": null
+    },
+    "updated_at": {
+      "type": "timestamp with time zone",
+      "nullable": false,
+      "default": null
+    },
+    "authentication_method": {
+      "type": "text",
+      "nullable": false,
+      "default": null
+    },
+    "id": {
+      "type": "uuid",
+      "nullable": false,
+      "default": null
+    }
+  }
+}
