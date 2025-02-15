@@ -1,0 +1,5 @@
+---
+description: How to implement anything with backend
+globs: 
+---
+I want to go feature by feature based on database defintions I dont wanto to one shot everything I want you to make feature by feature form by form input by inputI want you to use a chain of reasoning before implementing every single one to make sure you're not implementing something against RLS or contraints, everything has to be matching the database definitions, 

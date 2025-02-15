@@ -1,0 +1,5 @@
+---
+description: forces reasoning in every prompt
+globs: *
+---
+add a reasoning chain before and after and the after one with the steps that we need to do next.

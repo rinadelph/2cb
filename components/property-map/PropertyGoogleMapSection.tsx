@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { useLoadScript, LoadScript } from "@react-google-maps/api";
 import { PropertyGoogleMap } from "./PropertyGoogleMap";
 import { MapListingCard } from "./MapListingCard";
 import { useMapListings } from "@/hooks/useMapListings";
@@ -8,16 +9,13 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Listing } from "@/types/listing";
 
-export function PropertyGoogleMapSection() {
-  const { data: listings, isLoading, error } = useMapListings();
-  const [selectedListingId, setSelectedListingId] = useState<string>();
+// Define the libraries we need
+const libraries: ["places", "geometry"] = ["places", "geometry"];
 
-  console.log("PropertyGoogleMapSection render:", {
-    listingsCount: listings?.length || 0,
-    isLoading,
-    hasError: !!error,
-    selectedListingId
-  });
+export function PropertyGoogleMapSection() {
+  const { data: listings, isLoading: listingsLoading, error } = useMapListings();
+  const [selectedListingId, setSelectedListingId] = useState<string>();
+  const [isMapLoading, setIsMapLoading] = useState(true);
 
   const handleListingSelect = (listingId: string | null) => {
     console.log("Listing selected:", listingId);
@@ -29,11 +27,22 @@ export function PropertyGoogleMapSection() {
       <div className="grid grid-cols-1 lg:grid-cols-[1fr,400px] h-full">
         {/* Map Container */}
         <div className="relative h-full">
-          <PropertyGoogleMap 
-            listings={listings}
-            selectedListingId={selectedListingId}
-            onListingSelect={handleListingSelect}
-          />
+          {isMapLoading && (
+            <div className="absolute inset-0 bg-gray-100 flex items-center justify-center">
+              <Skeleton className="h-full w-full" />
+            </div>
+          )}
+          <LoadScript
+            googleMapsApiKey={process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY!}
+            libraries={libraries}
+            onLoad={() => setIsMapLoading(false)}
+          >
+            <PropertyGoogleMap 
+              listings={listings}
+              selectedListingId={selectedListingId}
+              onListingSelect={handleListingSelect}
+            />
+          </LoadScript>
         </div>
 
         {/* Listings Panel */}
@@ -45,7 +54,7 @@ export function PropertyGoogleMapSection() {
               </h2>
               
               <div className="space-y-3">
-                {isLoading ? (
+                {listingsLoading ? (
                   // Loading skeletons
                   Array(5).fill(0).map((_, i) => (
                     <div key={i} className="flex gap-3 p-3">

@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState, useCallback, useMemo } from 'react';
 import { googleMapsLoader } from '@/lib/google-maps-loader';
 import { Listing } from '@/types/listing';
 import { PropertyMapMarker } from './PropertyMapMarker';
@@ -23,6 +23,16 @@ export function SimpleMapDisplay({
   const [map, setMap] = useState<google.maps.Map | null>(null);
   const markersRef = useRef<{ [key: string]: google.maps.marker.AdvancedMarkerElement }>({});
 
+  // Memoize map initialization options
+  const mapOptions = useMemo(() => ({
+    center: { lat: 25.7617, lng: -80.1918 }, // Miami
+    zoom: 12,
+    mapId: 'property-map',
+    disableDefaultUI: true,
+    zoomControl: true,
+    streetViewControl: true,
+  }), []);
+
   console.log("SimpleMapDisplay render:", {
     listingsCount: listings.length,
     activeListingId,
@@ -30,36 +40,18 @@ export function SimpleMapDisplay({
     markerCount: Object.keys(markersRef.current).length
   });
 
-  // Initialize map
+  // Initialize map with error handling
   useEffect(() => {
-    if (!mapRef.current) return;
+    if (!mapRef.current || !window.google) return;
 
-    const initMap = async () => {
-      try {
-        console.log('Loading Google Maps...');
-        const google = await googleMapsLoader.load();
-        console.log('Google Maps loaded successfully');
-
-        console.log('Creating map instance...');
-        const mapInstance = new google.maps.Map(mapRef.current!, {
-          center: { lat: 25.7617, lng: -80.1918 }, // Miami
-          zoom: 12,
-          mapId: 'property-map', // Add a custom map ID
-          disableDefaultUI: true,
-          zoomControl: true,
-          streetViewControl: true,
-        });
-        console.log('Map instance created successfully');
-        
-        setMap(mapInstance);
-      } catch (error) {
-        console.error('Error loading map:', error);
-        setMapError('Failed to load map');
-      }
-    };
-
-    initMap();
-  }, []);
+    try {
+      const mapInstance = new window.google.maps.Map(mapRef.current, mapOptions);
+      setMap(mapInstance);
+    } catch (error) {
+      console.error('Error initializing map:', error);
+      setMapError('Failed to initialize map');
+    }
+  }, [mapOptions]);
 
   // Handle markers
   useEffect(() => {

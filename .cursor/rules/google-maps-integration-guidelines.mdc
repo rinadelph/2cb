@@ -1,0 +1,21 @@
+---
+description: This is the google maps integration guidelines
+globs: 
+---
+Google Maps Integration Guidelines
+Always wrap Google Maps components with the LoadScript component at the highest possible level where maps are needed. The LoadScript should only be included once per page/route.
+Required setup:
+Add NEXT_PUBLIC_GOOGLE_MAPS_API_KEY to your environment variables
+Include both "places" and "geometry" libraries when initializing the map
+LoadScript should be used in client-side components only (use "use client" directive)
+Common pitfalls to avoid:
+Don't initialize LoadScript multiple times on the same page
+Don't try to access google.maps before the API is loaded
+Don't place LoadScript too deep in the component tree
+Don't forget to handle loading states while the API initializes
+Best practices:
+Keep map initialization at the page/layout level
+Use environment variables for the API key
+Include only the libraries you need to optimize loading time
+Consider using useLoadScript hook for more granular control over loading states
+This should help maintain consistent Google Maps integration across the project.
